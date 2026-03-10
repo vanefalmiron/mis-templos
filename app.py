@@ -121,11 +121,31 @@ if "lightbox" not in st.session_state:
 
 # ── Lightbox ──────────────────────────────────────────────────────
 if st.session_state.lightbox:
-    st.markdown("### 🔍 Foto ampliada")
-    st.image(st.session_state.lightbox, use_container_width=True)
-    if st.button("✕ Cerrar"):
-        st.session_state.lightbox = None
-        st.rerun()
+    fotos_lb = st.session_state.get("lightbox_fotos", [st.session_state.lightbox])
+    idx = st.session_state.get("lightbox_idx", 0)
+
+    st.markdown(f"### 🖼️ Foto {idx + 1} de {len(fotos_lb)}")
+    st.image(fotos_lb[idx], use_container_width=True)
+
+    col_prev, col_cerrar, col_next = st.columns([1, 2, 1])
+    with col_prev:
+        if idx > 0:
+            if st.button("◀ Anterior"):
+                st.session_state.lightbox_idx = idx - 1
+                st.session_state.lightbox = fotos_lb[idx - 1]
+                st.rerun()
+    with col_cerrar:
+        if st.button("✕ Cerrar", use_container_width=True):
+            st.session_state.lightbox = None
+            st.session_state.lightbox_fotos = []
+            st.session_state.lightbox_idx = 0
+            st.rerun()
+    with col_next:
+        if idx < len(fotos_lb) - 1:
+            if st.button("Siguiente ▶"):
+                st.session_state.lightbox_idx = idx + 1
+                st.session_state.lightbox = fotos_lb[idx + 1]
+                st.rerun()
     st.stop()
 
 # ── Cargar datos ──────────────────────────────────────────────────
@@ -170,13 +190,13 @@ def mostrar_miniaturas(fotos, clave):
     fotos = urls_validas(fotos)
     if not fotos:
         return
-    cols = st.columns(min(len(fotos), 4))
-    for i, url in enumerate(fotos):
-        with cols[i % 4]:
-            st.image(url, width=150)
-            if st.button("🔍", key=f"lb_{clave}_{i}"):
-                st.session_state.lightbox = url
-                st.rerun()
+    # Muestra solo la primera foto como preview
+    st.image(fotos[0], width=150)
+    if st.button(f"🖼️ Ver fotos ({len(fotos)})", key=f"lb_{clave}"):
+        st.session_state.lightbox = fotos[0]
+        st.session_state.lightbox_fotos = fotos
+        st.session_state.lightbox_idx = 0
+        st.rerun()
 
 # ── Tabs ──────────────────────────────────────────────────────────
 tab_lista, tab_nueva, tab_editar = st.tabs(["📋 Mi lista", "➕ Añadir", "✏️ Editar"])
