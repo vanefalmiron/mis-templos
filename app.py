@@ -1,12 +1,10 @@
 import streamlit as st
 from datetime import date
-import os, base64, io, json
+import os, base64, io, json, uuid
 from PIL import Image, ImageOps
 from supabase import create_client
 
 # ── Conexión a Supabase ───────────────────────────────────────────
-# En local: edita directamente aquí
-# En Streamlit Cloud: deja estas líneas así y configura los Secrets
 SUPABASE_URL = os.environ.get(
     "SUPABASE_URL", "https://deemrewpebmxvocfvesh.supabase.co"
 )
@@ -32,47 +30,104 @@ def corregir_orientacion(imagen_bytes):
     return buf.getvalue()
 
 
+def subir_foto_storage(imagen_bytes):
+    """Sube bytes de imagen a Supabase Storage y devuelve la URL pública."""
+    nombre = f"{uuid.uuid4()}.jpg"
+    path = f"fotos/{nombre}"
+    db.storage.from_("iglesias").upload(
+        path=path,
+        file=imagen_bytes,
+        file_options={"content-type": "image/jpeg"},
+    )
+    return db.storage.from_("iglesias").get_public_url(path)
+
+
+def migrar_fotos_si_necesario(ig):
+    """Si la iglesia aún tiene fotos_bytes, las migra a Storage y actualiza la fila."""
+    fotos_bytes = ig.get("fotos_bytes") or []
+    fotos_urls = ig.get("fotos_urls") or []
+
+    if fotos_bytes and not fotos_urls:
+        nuevas_urls = []
+        for fb in fotos_bytes:
+            try:
+                img_bytes = corregir_orientacion(base64.b64decode(fb))
+                url = subir_foto_storage(img_bytes)
+                nuevas_urls.append(url)
+            except Exception as e:
+                st.warning(f"No se pudo migrar una foto: {e}")
+        db.table("iglesias").update({
+            "fotos_urls": nuevas_urls,
+            "fotos_bytes": [],
+        }).eq("id", ig["id"]).execute()
+        ig["fotos_urls"] = nuevas_urls
+        ig["fotos_bytes"] = []
+
+    return ig
+
+
 def cargar():
     res = db.table("iglesias").select("*").order("fecha", desc=True).execute()
     iglesias = []
     for row in res.data:
+        # Normaliza fotos_bytes (legado)
         fotos = row.get("fotos_bytes") or []
         if isinstance(fotos, str):
             fotos = json.loads(fotos)
         row["fotos_bytes"] = fotos
-        row["foto_bytes"] = None
+        row["fotos_urls"] = row.get("fotos_urls") or []
         iglesias.append(row)
     return iglesias
 
 
 def guardar_nueva(ig):
-    db.table("iglesias").insert(
-        {
-            "nombre": ig["nombre"],
-            "ciudad": ig["ciudad"],
-            "pais": ig["pais"],
-            "categoria": ig["categoria"],
-            "fecha": ig["fecha"],
-            "notas": ig["notas"],
-            "favorita": ig["favorita"],
-            "fotos_bytes": ig.get("fotos_bytes", []),
-        }
-    ).execute()
+    """Sube fotos a Storage y guarda la iglesia con URLs."""
+    urls = []
+    for fb_b64 in ig.get("fotos_b64", []):
+        try:
+            img_bytes = corregir_orientacion(base64.b64decode(fb_b64))
+            url = subir_foto_storage(img_bytes)
+            urls.append(url)
+        except Exception as e:
+            st.warning(f"Error subiendo foto: {e}")
+
+    db.table("iglesias").insert({
+        "nombre": ig["nombre"],
+        "ciudad": ig["ciudad"],
+        "pais": ig["pais"],
+        "categoria": ig["categoria"],
+        "fecha": ig["fecha"],
+        "notas": ig["notas"],
+        "favorita": ig["favorita"],
+        "fotos_urls": urls,
+        "fotos_bytes": [],
+    }).execute()
 
 
 def actualizar(ig):
-    db.table("iglesias").update(
-        {
-            "nombre": ig["nombre"],
-            "ciudad": ig["ciudad"],
-            "pais": ig["pais"],
-            "categoria": ig["categoria"],
-            "fecha": ig["fecha"],
-            "notas": ig["notas"],
-            "favorita": ig["favorita"],
-            "fotos_bytes": ig.get("fotos_bytes", []),
-        }
-    ).eq("id", ig["id"]).execute()
+    """Sube fotos nuevas (b64) a Storage, conserva URLs existentes y actualiza la fila."""
+    urls_existentes = ig.get("fotos_urls") or []
+    nuevos_b64 = ig.get("fotos_b64_nuevas") or []
+
+    for fb_b64 in nuevos_b64:
+        try:
+            img_bytes = corregir_orientacion(base64.b64decode(fb_b64))
+            url = subir_foto_storage(img_bytes)
+            urls_existentes.append(url)
+        except Exception as e:
+            st.warning(f"Error subiendo foto: {e}")
+
+    db.table("iglesias").update({
+        "nombre": ig["nombre"],
+        "ciudad": ig["ciudad"],
+        "pais": ig["pais"],
+        "categoria": ig["categoria"],
+        "fecha": ig["fecha"],
+        "notas": ig["notas"],
+        "favorita": ig["favorita"],
+        "fotos_urls": urls_existentes,
+        "fotos_bytes": [],  # limpia legado
+    }).eq("id", ig["id"]).execute()
 
 
 def eliminar(ig_id):
@@ -126,16 +181,15 @@ st.divider()
 
 
 # ── Fotos en miniatura ────────────────────────────────────────────
-def mostrar_fotos(fotos_b64, clave):
-    if not fotos_b64:
+def mostrar_fotos(fotos_urls, clave):
+    if not fotos_urls:
         return
-    cols = st.columns(min(len(fotos_b64), 4))
-    for i, fb in enumerate(fotos_b64):
-        foto_bytes = corregir_orientacion(base64.b64decode(fb))
+    cols = st.columns(min(len(fotos_urls), 4))
+    for i, url in enumerate(fotos_urls):
         with cols[i % 4]:
-            st.image(foto_bytes, width=160)
+            st.image(url, width=160)
             if st.button("Ver", key=f"lb_{clave}_{i}"):
-                st.session_state.lightbox_src = foto_bytes
+                st.session_state.lightbox_src = url
                 st.rerun()
 
 
@@ -164,7 +218,9 @@ with tab_lista:
         ]
 
         for ig in filtradas:
-            fotos = ig.get("fotos_bytes") or []
+            # Migra fotos al vuelo si aún están en fotos_bytes
+            ig = migrar_fotos_si_necesario(ig)
+            fotos = ig.get("fotos_urls") or []
             with st.container():
                 mostrar_fotos(fotos, ig["id"])
                 cols = st.columns([6, 1])
@@ -233,18 +289,16 @@ with tab_nueva:
         if not nombre.strip():
             st.error("El nombre del templo es obligatorio.")
         else:
-            guardar_nueva(
-                {
-                    "nombre": nombre,
-                    "ciudad": ciudad,
-                    "pais": pais,
-                    "categoria": categoria,
-                    "fecha": str(fecha),
-                    "notas": notas,
-                    "favorita": favorita,
-                    "fotos_bytes": fotos_b64_nueva,
-                }
-            )
+            guardar_nueva({
+                "nombre": nombre,
+                "ciudad": ciudad,
+                "pais": pais,
+                "categoria": categoria,
+                "fecha": str(fecha),
+                "notas": notas,
+                "favorita": favorita,
+                "fotos_b64": fotos_b64_nueva,
+            })
             st.success(f"✅ '{nombre}' guardado correctamente.")
             st.balloons()
             st.rerun()
@@ -259,29 +313,28 @@ with tab_editar:
         nombres = [f"{ig['nombre']} ({ig.get('ciudad','')})" for ig in iglesias]
         seleccion = st.selectbox("Selecciona cuál editar", nombres)
         ig_edit = iglesias[nombres.index(seleccion)]
+
+        # Migra fotos al vuelo si aún están en fotos_bytes
+        ig_edit = migrar_fotos_si_necesario(ig_edit)
         st.divider()
 
-        fotos_actuales = ig_edit.get("fotos_bytes") or []
+        fotos_actuales_urls = ig_edit.get("fotos_urls") or []
 
-        if fotos_actuales:
+        if fotos_actuales_urls:
             st.caption(
-                f"📷 Fotos actuales ({len(fotos_actuales)}) — pulsa 🗑️ para eliminar una:"
+                f"📷 Fotos actuales ({len(fotos_actuales_urls)}) — pulsa 🗑️ para eliminar una:"
             )
-            for i, fb in enumerate(fotos_actuales):
+            for i, url in enumerate(fotos_actuales_urls):
                 col_img, col_btn = st.columns([5, 1])
                 with col_img:
-                    st.image(
-                        corregir_orientacion(base64.b64decode(fb)),
-                        use_container_width=True,
-                    )
+                    st.image(url, use_container_width=True)
                 with col_btn:
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("🗑️", key=f"delfoto_{ig_edit['id']}_{i}"):
-                        nueva_lista = [
-                            f for j, f in enumerate(fotos_actuales) if j != i
-                        ]
-                        ig_edit["fotos_bytes"] = nueva_lista
-                        actualizar(ig_edit)
+                        nueva_lista = [u for j, u in enumerate(fotos_actuales_urls) if j != i]
+                        db.table("iglesias").update({
+                            "fotos_urls": nueva_lista
+                        }).eq("id", ig_edit["id"]).execute()
                         st.success(f"Foto {i+1} eliminada.")
                         st.rerun()
 
@@ -337,19 +390,17 @@ with tab_editar:
             if not nombre_e.strip():
                 st.error("El nombre es obligatorio.")
             else:
-                fotos_final = (ig_edit.get("fotos_bytes") or []) + fotos_b64_añadir
-                actualizar(
-                    {
-                        "id": ig_edit["id"],
-                        "nombre": nombre_e,
-                        "ciudad": ciudad_e,
-                        "pais": pais_e,
-                        "categoria": categoria_e,
-                        "fecha": str(fecha_e),
-                        "notas": notas_e,
-                        "favorita": favorita_e,
-                        "fotos_bytes": fotos_final,
-                    }
-                )
+                actualizar({
+                    "id": ig_edit["id"],
+                    "nombre": nombre_e,
+                    "ciudad": ciudad_e,
+                    "pais": pais_e,
+                    "categoria": categoria_e,
+                    "fecha": str(fecha_e),
+                    "notas": notas_e,
+                    "favorita": favorita_e,
+                    "fotos_urls": fotos_actuales_urls,       # URLs que quedaron
+                    "fotos_b64_nuevas": fotos_b64_añadir,    # fotos nuevas a subir
+                })
                 st.success(f"✅ '{nombre_e}' actualizado correctamente.")
                 st.rerun()
