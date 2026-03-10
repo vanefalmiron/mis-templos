@@ -182,6 +182,7 @@ st.divider()
 
 # ── Fotos en miniatura ────────────────────────────────────────────
 def mostrar_fotos(fotos_urls, clave):
+    fotos_urls = [u for u in (fotos_urls or []) if isinstance(u, str) and u.startswith("http")]
     if not fotos_urls:
         return
     cols = st.columns(min(len(fotos_urls), 4))
