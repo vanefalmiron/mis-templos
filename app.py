@@ -394,7 +394,7 @@ with tab_editar:
 
         st.divider()
 
-nombre_e   = st.text_input("Nombre *", value=t_edit.get("nombre",""), key="e_nombre")
+        nombre_e   = st.text_input("Nombre *", value=t_edit.get("nombre",""), key="e_nombre")
         ciudad_e   = st.text_input("Ciudad", value=t_edit.get("ciudad",""), key="e_ciudad")
         pais_e     = st.text_input("País", value=t_edit.get("pais",""), key="e_pais")
         direccion_e = st.text_input("Dirección", value=t_edit.get("direccion",""), key="e_direccion")
