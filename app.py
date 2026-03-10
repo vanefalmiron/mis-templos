@@ -393,22 +393,20 @@ with tab_editar:
                     st.image(corregir_orientacion(datos), caption="Nueva", use_container_width=True)
 
         st.divider()
-        
-        nombre_e   = st.text_input("Nombre *", value=t_edit.get("nombre",""), key="e_nombre")
-        ciudad_e   = st.text_input("Ciudad", value=t_edit.get("ciudad",""), key="e_ciudad")
-        pais_e     = st.text_input("País", value=t_edit.get("pais",""), key="e_pais")
-        direccion_e = st.text_input("Dirección", value=t_edit.get("direccion",""), key="e_direccion")
-        cat_idx    = CATEGORIAS.index(t_edit["categoria"]) if t_edit.get("categoria") in CATEGORIAS else 0
-        cat_e      = st.selectbox("Categoría", CATEGORIAS, index=cat_idx, key="e_cat")
-        try:
-            fecha_val = date.fromisoformat(t_edit.get("fecha", str(date.today())))
-        except:
-            fecha_val = date.today()
-        fecha_e    = st.date_input("Fecha", value=fecha_val, key="e_fecha")
-        notas_e    = st.text_area("Notas", value=t_edit.get("notas",""), height=180, key="e_notas")
-        fav_e      = st.checkbox("⭐ Favorita", value=t_edit.get("favorita", False), key="e_fav")
 
-if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
+        # Campos precargados desde session_state — siempre muestran el templo correcto
+        nombre_e    = st.text_input("Nombre *",    key="e_nombre")
+        ciudad_e    = st.text_input("Ciudad",      key="e_ciudad")
+        pais_e      = st.text_input("País",        key="e_pais")
+        direccion_e = st.text_input("Dirección",   key="e_direccion")
+        cat_e       = st.selectbox("Categoría", CATEGORIAS,
+                                   index=st.session_state.get("e_cat_idx", 0),
+                                   key="e_cat")
+        fecha_e     = st.date_input("Fecha",       key="e_fecha")
+        notas_e     = st.text_area("Notas", height=180, key="e_notas")
+        fav_e       = st.checkbox("⭐ Favorita",   key="e_fav")
+
+        if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
             if not nombre_e.strip():
                 st.error("El nombre es obligatorio.")
             else:
