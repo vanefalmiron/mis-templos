@@ -236,7 +236,7 @@ with tab_lista:
                         f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
                     )
                     if t.get("notas"):
-                        st.markdown(t["notas"])
+                        st.markdown(f'<div style="white-space: pre-wrap; word-wrap: break-word; overflow: visible;">{t["notas"]}</div>', unsafe_allow_html=True)
                 with col_btns:
                     if st.button("🗑️", key=f"del_{t['id']}", help="Eliminar"):
                         eliminar(t["id"])
