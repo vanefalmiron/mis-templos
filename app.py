@@ -15,6 +15,14 @@ def get_client():
 
 db = get_client()
 
+# ── Categorías ────────────────────────────────────────────────────
+CATEGORIAS = [
+    "Iglesia", "Catedral", "Basílica", "Capilla",
+    "Monasterio", "Templo Budista", "Templo Hindú",
+    "Templo Sintoísta", "Mezquita", "Sinagoga",
+    "Santuario", "Otro",
+]
+
 # ── Utilidades de imagen ──────────────────────────────────────────
 def corregir_orientacion(imagen_bytes):
     img = Image.open(io.BytesIO(imagen_bytes))
@@ -38,6 +46,21 @@ def urls_validas(lista):
 
 def maps_url(direccion):
     return f"https://www.google.com/maps/search/?api=1&query={quote(direccion)}"
+
+def cargar_campos_editar(t):
+    """Precarga los valores del templo en session_state para el formulario."""
+    st.session_state["e_nombre"]    = t.get("nombre", "")
+    st.session_state["e_ciudad"]    = t.get("ciudad", "")
+    st.session_state["e_pais"]      = t.get("pais", "")
+    st.session_state["e_direccion"] = t.get("direccion", "") or ""
+    st.session_state["e_notas"]     = t.get("notas", "") or ""
+    st.session_state["e_fav"]       = t.get("favorita", False)
+    try:
+        st.session_state["e_fecha"] = date.fromisoformat(t.get("fecha", str(date.today())))
+    except:
+        st.session_state["e_fecha"] = date.today()
+    cat = t.get("categoria", CATEGORIAS[0])
+    st.session_state["e_cat_idx"]   = CATEGORIAS.index(cat) if cat in CATEGORIAS else 0
 
 # ── CRUD Supabase ─────────────────────────────────────────────────
 def cargar():
@@ -82,9 +105,7 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Lato', sans-serif;
-}
+html, body, [class*="css"] { font-family: 'Lato', sans-serif; }
 h1 {
     font-family: 'Cinzel', serif !important;
     color: #b8883a !important;
@@ -131,24 +152,22 @@ h1 {
     text-decoration: none;
     font-size: 0.85rem;
 }
-.maps-link a:hover {
-    text-decoration: underline;
-}
+.maps-link a:hover { text-decoration: underline; }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Session state ─────────────────────────────────────────────────
 if "lightbox" not in st.session_state:
     st.session_state.lightbox = None
+if "ultimo_editado" not in st.session_state:
+    st.session_state["ultimo_editado"] = None
 
 # ── Lightbox ──────────────────────────────────────────────────────
 if st.session_state.lightbox:
     fotos_lb = st.session_state.get("lightbox_fotos", [st.session_state.lightbox])
     idx = st.session_state.get("lightbox_idx", 0)
-
     st.markdown(f"### 🖼️ Foto {idx + 1} de {len(fotos_lb)}")
     st.image(fotos_lb[idx], use_container_width=True)
-
     col_prev, col_cerrar, col_next = st.columns([1, 2, 1])
     with col_prev:
         if idx > 0:
@@ -199,14 +218,6 @@ with col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Categorías ────────────────────────────────────────────────────
-CATEGORIAS = [
-    "Iglesia", "Catedral", "Basílica", "Capilla",
-    "Monasterio", "Templo Budista", "Templo Hindú",
-    "Templo Sintoísta", "Mezquita", "Sinagoga",
-    "Santuario", "Otro",
-]
-
 # ── Helper fotos ──────────────────────────────────────────────────
 def mostrar_miniaturas(fotos, clave):
     fotos = urls_validas(fotos)
@@ -256,7 +267,6 @@ with tab_lista:
                         f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
                         f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
                     )
-                    # Link a Google Maps si hay dirección
                     if t.get("direccion"):
                         dir_escaped = html_lib.escape(t["direccion"])
                         url = maps_url(t["direccion"])
@@ -271,7 +281,6 @@ with tab_lista:
                     if st.button("★" if t.get("favorita") else "☆", key=f"fav_{t['id']}"):
                         toggle_fav(t)
                         st.rerun()
-                # Notas fuera de columnas para ancho completo
                 if t.get("notas"):
                     notas_escaped = html_lib.escape(t["notas"])
                     st.markdown(
@@ -302,14 +311,14 @@ with tab_nueva:
             with prev[i % 4]:
                 st.image(corregir_orientacion(datos), use_container_width=True)
 
-    nombre   = st.text_input("Nombre del templo *", placeholder="Ej: Catedral de Burgos", key="n_nombre")
-    ciudad   = st.text_input("Ciudad", placeholder="Ej: Burgos", key="n_ciudad")
-    pais     = st.text_input("País", placeholder="Ej: España", key="n_pais")
+    nombre    = st.text_input("Nombre del templo *", placeholder="Ej: Catedral de Burgos", key="n_nombre")
+    ciudad    = st.text_input("Ciudad", placeholder="Ej: Burgos", key="n_ciudad")
+    pais      = st.text_input("País", placeholder="Ej: España", key="n_pais")
     direccion = st.text_input("Dirección", placeholder="Ej: Pl. de la Catedral, s/n, Burgos", key="n_direccion")
-    cat      = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
-    fecha    = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
-    notas    = st.text_area("Notas personales", placeholder="Tus impresiones...", height=180, key="n_notas")
-    fav      = st.checkbox("⭐ Marcar como favorita", key="n_fav")
+    cat       = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
+    fecha     = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
+    notas     = st.text_area("Notas personales", placeholder="Tus impresiones...", height=180, key="n_notas")
+    fav       = st.checkbox("⭐ Marcar como favorita", key="n_fav")
 
     if st.button("💾 Guardar", type="primary", use_container_width=True, key="btn_nueva"):
         if not nombre.strip():
@@ -341,19 +350,16 @@ with tab_editar:
     else:
         nombres = [f"{t['nombre']} ({t.get('ciudad','')})" for t in templos]
         sel = st.selectbox("Selecciona cuál editar", nombres, key="sel_editar")
-        idx_sel = nombres.index(sel)
-        t_edit = templos[idx_sel]
+        t_edit = templos[nombres.index(sel)]
 
-        # Resetea los campos si cambia la selección
-        if st.session_state.get("ultimo_editado") != t_edit["id"]:
+        # Siempre que cambie el templo seleccionado, recarga campos y rerun
+        if st.session_state["ultimo_editado"] != t_edit["id"]:
             st.session_state["ultimo_editado"] = t_edit["id"]
-            for k in ["e_nombre","e_ciudad","e_pais","e_direccion","e_cat","e_fecha","e_notas","e_fav"]:
-                if k in st.session_state:
-                    del st.session_state[k]
+            cargar_campos_editar(t_edit)
             st.rerun()
 
         st.divider()
-        
+
         fotos_act = urls_validas(t_edit.get("fotos_urls"))
         if fotos_act:
             st.caption(f"📷 Fotos actuales ({len(fotos_act)}) — pulsa 🗑️ para eliminar:")
@@ -387,19 +393,18 @@ with tab_editar:
                     st.image(corregir_orientacion(datos), caption="Nueva", use_container_width=True)
 
         st.divider()
-        nombre_e   = st.text_input("Nombre *", value=t_edit.get("nombre",""), key="e_nombre")
-        ciudad_e   = st.text_input("Ciudad", value=t_edit.get("ciudad",""), key="e_ciudad")
-        pais_e     = st.text_input("País", value=t_edit.get("pais",""), key="e_pais")
-        direccion_e = st.text_input("Dirección", value=t_edit.get("direccion",""), key="e_direccion")
-        cat_idx    = CATEGORIAS.index(t_edit["categoria"]) if t_edit.get("categoria") in CATEGORIAS else 0
-        cat_e      = st.selectbox("Categoría", CATEGORIAS, index=cat_idx, key="e_cat")
-        try:
-            fecha_val = date.fromisoformat(t_edit.get("fecha", str(date.today())))
-        except:
-            fecha_val = date.today()
-        fecha_e    = st.date_input("Fecha", value=fecha_val, key="e_fecha")
-        notas_e    = st.text_area("Notas", value=t_edit.get("notas",""), height=180, key="e_notas")
-        fav_e      = st.checkbox("⭐ Favorita", value=t_edit.get("favorita", False), key="e_fav")
+
+        # Campos precargados desde session_state — siempre muestran el templo correcto
+        nombre_e    = st.text_input("Nombre *",    key="e_nombre")
+        ciudad_e    = st.text_input("Ciudad",      key="e_ciudad")
+        pais_e      = st.text_input("País",        key="e_pais")
+        direccion_e = st.text_input("Dirección",   key="e_direccion")
+        cat_e       = st.selectbox("Categoría", CATEGORIAS,
+                                   index=st.session_state.get("e_cat_idx", 0),
+                                   key="e_cat")
+        fecha_e     = st.date_input("Fecha",       key="e_fecha")
+        notas_e     = st.text_area("Notas", height=180, key="e_notas")
+        fav_e       = st.checkbox("⭐ Favorita",   key="e_fav")
 
         if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
             if not nombre_e.strip():
@@ -420,5 +425,12 @@ with tab_editar:
                     "direccion": direccion_e, "categoria": cat_e, "fecha": str(fecha_e),
                     "notas": notas_e, "favorita": fav_e,
                 }, fotos_final)
+                # Recarga campos con los nuevos valores guardados
+                st.session_state["e_nombre"]    = nombre_e
+                st.session_state["e_ciudad"]    = ciudad_e
+                st.session_state["e_pais"]      = pais_e
+                st.session_state["e_direccion"] = direccion_e
+                st.session_state["e_notas"]     = notas_e
+                st.session_state["e_fav"]       = fav_e
                 st.success(f"✅ '{nombre_e}' actualizado correctamente.")
                 st.rerun()
