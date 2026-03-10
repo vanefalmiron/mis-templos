@@ -242,14 +242,6 @@ with tab_lista:
                         f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
                         f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
                     )
-                    if t.get("notas"):
-                        # Escapar caracteres HTML especiales para evitar rotura
-                        import html as html_lib
-                        notas_escaped = html_lib.escape(t["notas"])
-                        st.markdown(
-                            f'<p class="notas-texto">{notas_escaped}</p>',
-                            unsafe_allow_html=True
-                        )
                 with col_btns:
                     if st.button("🗑️", key=f"del_{t['id']}", help="Eliminar"):
                         eliminar(t["id"])
@@ -257,6 +249,13 @@ with tab_lista:
                     if st.button("★" if t.get("favorita") else "☆", key=f"fav_{t['id']}"):
                         toggle_fav(t)
                         st.rerun()
+                if t.get("notas"):
+                    import html as html_lib
+                    notas_escaped = html_lib.escape(t["notas"])
+                    st.markdown(
+                        f'<p class="notas-texto">{notas_escaped}</p>',
+                        unsafe_allow_html=True
+                    )
             st.markdown("---")
 
 # ════════════════════════════════════════════════════
