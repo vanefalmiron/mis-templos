@@ -1,246 +1,247 @@
 import streamlit as st
 from datetime import date
-import os, base64, io, json, uuid
+import os, base64, io, uuid
 from PIL import Image, ImageOps
 from supabase import create_client
 
 # ── Conexión a Supabase ───────────────────────────────────────────
-SUPABASE_URL = os.environ.get(
-    "SUPABASE_URL", "https://deemrewpebmxvocfvesh.supabase.co"
-)
-SUPABASE_KEY = os.environ.get(
-    "SUPABASE_KEY", "sb_publishable_HDy1NgJqXFXLxdTUJ5yM4A_pIva_zjP"
-)
-
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://deemrewpebmxvocfvesh.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_HDy1NgJqXFXLxdTUJ5yM4A_pIva_zjP")
 
 @st.cache_resource
 def get_client():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
 db = get_client()
 
-
-# ── Utilidades ────────────────────────────────────────────────────
+# ── Utilidades de imagen ──────────────────────────────────────────
 def corregir_orientacion(imagen_bytes):
     img = Image.open(io.BytesIO(imagen_bytes))
     img = ImageOps.exif_transpose(img)
     buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=85)
+    img.save(buf, format="JPEG", quality=82)
     return buf.getvalue()
 
-
-def subir_foto_storage(imagen_bytes):
-    """Sube bytes de imagen a Supabase Storage y devuelve la URL pública."""
+def subir_foto(imagen_bytes):
+    """Sube bytes a Supabase Storage y devuelve la URL pública."""
     nombre = f"{uuid.uuid4()}.jpg"
     path = f"fotos/{nombre}"
-    db.storage.from_("iglesias").upload(
+    db.storage.from_("templos").upload(
         path=path,
         file=imagen_bytes,
         file_options={"content-type": "image/jpeg"},
     )
-    return db.storage.from_("iglesias").get_public_url(path)
+    return db.storage.from_("templos").get_public_url(path)
 
-
-def migrar_fotos_si_necesario(ig):
-    """Si la iglesia aún tiene fotos_bytes, las migra a Storage y actualiza la fila."""
-    fotos_bytes = ig.get("fotos_bytes") or []
-    fotos_urls = ig.get("fotos_urls") or []
-
-    if fotos_bytes and not fotos_urls:
-        nuevas_urls = []
-        for fb in fotos_bytes:
-            try:
-                img_bytes = corregir_orientacion(base64.b64decode(fb))
-                url = subir_foto_storage(img_bytes)
-                nuevas_urls.append(url)
-            except Exception as e:
-                st.warning(f"No se pudo migrar una foto: {e}")
-        db.table("iglesias").update({
-            "fotos_urls": nuevas_urls,
-            "fotos_bytes": [],
-        }).eq("id", ig["id"]).execute()
-        ig["fotos_urls"] = nuevas_urls
-        ig["fotos_bytes"] = []
-
-    return ig
-
-
-def cargar():
-    res = db.table("iglesias").select("*").order("fecha", desc=True).execute()
-    iglesias = []
-    for row in res.data:
-        # Normaliza fotos_bytes (legado)
-        fotos = row.get("fotos_bytes") or []
-        if isinstance(fotos, str):
-            fotos = json.loads(fotos)
-        row["fotos_bytes"] = fotos
-        row["fotos_urls"] = row.get("fotos_urls") or []
-        iglesias.append(row)
-    return iglesias
-
-
-def guardar_nueva(ig):
-    """Sube fotos a Storage y guarda la iglesia con URLs."""
+def procesar_uploads(archivos):
+    """Recibe lista de UploadedFile, corrige orientación y sube a Storage. Devuelve URLs."""
     urls = []
-    for fb_b64 in ig.get("fotos_b64", []):
+    for f in archivos:
         try:
-            img_bytes = corregir_orientacion(base64.b64decode(fb_b64))
-            url = subir_foto_storage(img_bytes)
+            corr = corregir_orientacion(f.read())
+            url = subir_foto(corr)
             urls.append(url)
         except Exception as e:
-            st.warning(f"Error subiendo foto: {e}")
+            st.warning(f"No se pudo subir una foto: {e}")
+    return urls
 
-    db.table("iglesias").insert({
-        "nombre": ig["nombre"],
-        "ciudad": ig["ciudad"],
-        "pais": ig["pais"],
+def urls_validas(lista):
+    return [u for u in (lista or []) if isinstance(u, str) and u.startswith("http")]
+
+# ── CRUD Supabase ─────────────────────────────────────────────────
+def cargar():
+    res = db.table("templos").select("*").order("fecha", desc=True).execute()
+    return res.data or []
+
+def guardar_nuevo(ig, fotos_urls):
+    db.table("templos").insert({
+        "nombre":    ig["nombre"],
+        "ciudad":    ig["ciudad"],
+        "pais":      ig["pais"],
         "categoria": ig["categoria"],
-        "fecha": ig["fecha"],
-        "notas": ig["notas"],
-        "favorita": ig["favorita"],
-        "fotos_urls": urls,
-        "fotos_bytes": [],
+        "fecha":     ig["fecha"],
+        "notas":     ig["notas"],
+        "favorita":  ig["favorita"],
+        "fotos_urls": fotos_urls,
     }).execute()
 
-
-def actualizar(ig):
-    """Sube fotos nuevas (b64) a Storage, conserva URLs existentes y actualiza la fila."""
-    urls_existentes = ig.get("fotos_urls") or []
-    nuevos_b64 = ig.get("fotos_b64_nuevas") or []
-
-    for fb_b64 in nuevos_b64:
-        try:
-            img_bytes = corregir_orientacion(base64.b64decode(fb_b64))
-            url = subir_foto_storage(img_bytes)
-            urls_existentes.append(url)
-        except Exception as e:
-            st.warning(f"Error subiendo foto: {e}")
-
-    db.table("iglesias").update({
-        "nombre": ig["nombre"],
-        "ciudad": ig["ciudad"],
-        "pais": ig["pais"],
+def actualizar(ig, fotos_urls):
+    db.table("templos").update({
+        "nombre":    ig["nombre"],
+        "ciudad":    ig["ciudad"],
+        "pais":      ig["pais"],
         "categoria": ig["categoria"],
-        "fecha": ig["fecha"],
-        "notas": ig["notas"],
-        "favorita": ig["favorita"],
-        "fotos_urls": urls_existentes,
-        "fotos_bytes": [],  # limpia legado
+        "fecha":     ig["fecha"],
+        "notas":     ig["notas"],
+        "favorita":  ig["favorita"],
+        "fotos_urls": fotos_urls,
     }).eq("id", ig["id"]).execute()
 
-
 def eliminar(ig_id):
-    db.table("iglesias").delete().eq("id", ig_id).execute()
-
+    db.table("templos").delete().eq("id", ig_id).execute()
 
 def toggle_fav(ig):
-    db.table("iglesias").update({"favorita": not ig["favorita"]}).eq(
-        "id", ig["id"]
-    ).execute()
+    db.table("templos").update({"favorita": not ig["favorita"]}).eq("id", ig["id"]).execute()
 
-
-# ── Config ────────────────────────────────────────────────────────
+# ── Estilos ───────────────────────────────────────────────────────
 st.set_page_config(page_title="Mis Templos", page_icon="⛪", layout="centered")
-st.markdown(
-    """
+st.markdown("""
 <style>
-  h1 { color: #c9993a; text-align: center; letter-spacing: .1em; }
-  p, .stMarkdown p { white-space: normal !important; word-wrap: break-word; }
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Lato', sans-serif;
+}
+h1 {
+    font-family: 'Cinzel', serif !important;
+    color: #b8883a !important;
+    text-align: center;
+    letter-spacing: .15em;
+    font-size: 2rem !important;
+}
+.stTabs [data-baseweb="tab"] {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    letter-spacing: .05em;
+}
+.metric-card {
+    background: linear-gradient(135deg, #1a1209 0%, #2e1f0a 100%);
+    border: 1px solid #b8883a44;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    color: #e8d5a3;
+}
+.metric-card .num {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    color: #b8883a;
+    display: block;
+}
+.metric-card .label {
+    font-size: 0.75rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #a08060;
+}
+.templo-card {
+    background: linear-gradient(135deg, #0f0a04 0%, #1e1508 100%);
+    border: 1px solid #b8883a33;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+}
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-if "lightbox_src" not in st.session_state:
-    st.session_state.lightbox_src = None
-if "reload" not in st.session_state:
-    st.session_state.reload = 0
-
-# ── Cargar datos ──────────────────────────────────────────────────
-iglesias = cargar()
+# ── Session state ─────────────────────────────────────────────────
+if "lightbox" not in st.session_state:
+    st.session_state.lightbox = None
 
 # ── Lightbox ──────────────────────────────────────────────────────
-if st.session_state.lightbox_src:
+if st.session_state.lightbox:
     st.markdown("### 🔍 Foto ampliada")
-    st.image(st.session_state.lightbox_src, use_container_width=True)
-    if st.button("✕  Cerrar y volver"):
-        st.session_state.lightbox_src = None
+    st.image(st.session_state.lightbox, use_container_width=True)
+    if st.button("✕ Cerrar"):
+        st.session_state.lightbox = None
         st.rerun()
     st.stop()
+
+# ── Cargar datos ──────────────────────────────────────────────────
+templos = cargar()
 
 # ── Cabecera ──────────────────────────────────────────────────────
 st.title("✦ Mis Templos ✦")
 st.caption("Registro personal de lugares sagrados visitados")
+st.markdown("")
 
-c1, c2, c3 = st.columns(3)
-c1.metric("⛪ Visitados", len(iglesias))
-c2.metric("🌍 Países", len(set(i.get("pais", "") for i in iglesias if i.get("pais"))))
-c3.metric("⭐ Favoritos", sum(1 for i in iglesias if i.get("favorita")))
-st.divider()
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown(f"""<div class="metric-card">
+        <span class="num">{len(templos)}</span>
+        <span class="label">⛪ Visitados</span>
+    </div>""", unsafe_allow_html=True)
+with col2:
+    paises = len(set(t.get("pais", "") for t in templos if t.get("pais")))
+    st.markdown(f"""<div class="metric-card">
+        <span class="num">{paises}</span>
+        <span class="label">🌍 Países</span>
+    </div>""", unsafe_allow_html=True)
+with col3:
+    favs = sum(1 for t in templos if t.get("favorita"))
+    st.markdown(f"""<div class="metric-card">
+        <span class="num">{favs}</span>
+        <span class="label">⭐ Favoritos</span>
+    </div>""", unsafe_allow_html=True)
 
+st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Fotos en miniatura ────────────────────────────────────────────
-def mostrar_fotos(fotos_urls, clave):
-    fotos_urls = [u for u in (fotos_urls or []) if isinstance(u, str) and u.startswith("http")]
-    if not fotos_urls:
+# ── Categorías ────────────────────────────────────────────────────
+CATEGORIAS = [
+    "Iglesia", "Catedral", "Basílica", "Capilla",
+    "Monasterio", "Templo Budista", "Templo Hindú",
+    "Templo Sintoísta", "Mezquita", "Sinagoga",
+    "Santuario", "Otro",
+]
+
+# ── Helper fotos ─────────────────────────────────────────────────
+def mostrar_miniaturas(fotos, clave):
+    fotos = urls_validas(fotos)
+    if not fotos:
         return
-    cols = st.columns(min(len(fotos_urls), 4))
-    for i, url in enumerate(fotos_urls):
+    cols = st.columns(min(len(fotos), 4))
+    for i, url in enumerate(fotos):
         with cols[i % 4]:
-            st.image(url, width=160)
-            if st.button("Ver", key=f"lb_{clave}_{i}"):
-                st.session_state.lightbox_src = url
+            st.image(url, width=150)
+            if st.button("🔍", key=f"lb_{clave}_{i}"):
+                st.session_state.lightbox = url
                 st.rerun()
 
-
 # ── Tabs ──────────────────────────────────────────────────────────
-tab_lista, tab_nueva, tab_editar = st.tabs(
-    ["📋 Mi lista", "➕ Añadir nueva", "✏️ Editar"]
-)
+tab_lista, tab_nueva, tab_editar = st.tabs(["📋 Mi lista", "➕ Añadir", "✏️ Editar"])
 
 # ════════════════════════════════════════════════════
 # TAB LISTA
 # ════════════════════════════════════════════════════
 with tab_lista:
-    if not iglesias:
+    if not templos:
         st.info("Aún no tienes ningún templo registrado. ¡Añade el primero!")
     else:
         busqueda = st.text_input("🔍 Buscar", placeholder="Nombre, ciudad o país...")
-        cats = ["Todas"] + sorted(set(i.get("categoria", "") for i in iglesias))
-        filtro_cat = st.selectbox("Filtrar por categoría", cats)
+        cats_filtro = ["Todas"] + sorted(set(t.get("categoria", "") for t in templos if t.get("categoria")))
+        filtro_cat = st.selectbox("Categoría", cats_filtro)
+        solo_favs = st.checkbox("⭐ Solo favoritos")
 
-        filtradas = [
-            i
-            for i in iglesias
-            if busqueda.lower()
-            in (i.get("nombre", "") + i.get("ciudad", "") + i.get("pais", "")).lower()
-            and (filtro_cat == "Todas" or i.get("categoria") == filtro_cat)
+        filtrados = [
+            t for t in templos
+            if busqueda.lower() in (t.get("nombre","") + t.get("ciudad","") + t.get("pais","")).lower()
+            and (filtro_cat == "Todas" or t.get("categoria") == filtro_cat)
+            and (not solo_favs or t.get("favorita"))
         ]
 
-        for ig in filtradas:
-            # Migra fotos al vuelo si aún están en fotos_bytes
-            ig = migrar_fotos_si_necesario(ig)
-            fotos = ig.get("fotos_urls") or []
+        if not filtrados:
+            st.warning("No hay resultados para esa búsqueda.")
+
+        for t in filtrados:
+            fotos = urls_validas(t.get("fotos_urls"))
             with st.container():
-                mostrar_fotos(fotos, ig["id"])
-                cols = st.columns([6, 1])
-                with cols[0]:
-                    fav = "⭐" if ig.get("favorita") else "☆"
-                    st.subheader(f"{fav} {ig.get('nombre','')}")
+                mostrar_miniaturas(fotos, t["id"])
+                col_info, col_btns = st.columns([6, 1])
+                with col_info:
+                    fav = "⭐" if t.get("favorita") else "☆"
+                    st.subheader(f"{fav} {t.get('nombre','')}")
                     st.caption(
-                        f"📍 {ig.get('ciudad','')}, {ig.get('pais','')}  |  "
-                        f"🏷️ {ig.get('categoria','')}  |  📅 {ig.get('fecha','')}"
+                        f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
+                        f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
                     )
-                    if ig.get("notas"):
-                        st.markdown(ig.get("notas"))
-                with cols[1]:
-                    if st.button("🗑️", key=f"del_{ig['id']}", help="Eliminar"):
-                        eliminar(ig["id"])
+                    if t.get("notas"):
+                        st.markdown(t["notas"])
+                with col_btns:
+                    if st.button("🗑️", key=f"del_{t['id']}", help="Eliminar"):
+                        eliminar(t["id"])
                         st.rerun()
-                    fav_label = "★" if ig.get("favorita") else "⭐"
-                    if st.button(fav_label, key=f"fav_{ig['id']}"):
-                        toggle_fav(ig)
+                    if st.button("★" if t.get("favorita") else "☆", key=f"fav_{t['id']}"):
+                        toggle_fav(t)
                         st.rerun()
             st.markdown("---")
 
@@ -249,57 +250,39 @@ with tab_lista:
 # ════════════════════════════════════════════════════
 with tab_nueva:
     st.subheader("Nueva visita")
-    fotos_upload = st.file_uploader(
-        "📷 Fotos del lugar — puedes subir varias a la vez",
-        type=["jpg", "jpeg", "png", "webp"],
+
+    fotos_up = st.file_uploader(
+        "📷 Fotos (puedes subir varias)",
+        type=["jpg","jpeg","png","webp"],
         accept_multiple_files=True,
-        key="upload_nueva",
+        key="up_nueva",
     )
-    fotos_b64_nueva = []
-    if fotos_upload:
-        st.caption(f"{len(fotos_upload)} foto(s) seleccionada(s):")
-        prev_cols = st.columns(min(len(fotos_upload), 4))
-        for i, f in enumerate(fotos_upload):
-            corr = corregir_orientacion(f.read())
-            fotos_b64_nueva.append(base64.b64encode(corr).decode())
-            with prev_cols[i % 4]:
-                st.image(corr, use_container_width=True)
+    if fotos_up:
+        prev = st.columns(min(len(fotos_up), 4))
+        for i, f in enumerate(fotos_up):
+            with prev[i % 4]:
+                st.image(corregir_orientacion(f.read()), use_container_width=True)
+                f.seek(0)  # reset para poder leerlo al guardar
 
-    nombre = st.text_input(
-        "Nombre del templo *", placeholder="Ej: Catedral de Burgos", key="n_nombre"
-    )
-    ciudad = st.text_input("Ciudad", placeholder="Ej: Burgos", key="n_ciudad")
-    pais = st.text_input("País", placeholder="Ej: España", key="n_pais")
-    categoria = st.selectbox(
-        "Categoría",
-        ["Iglesia", "Basílica", "Catedral", "Capilla", "Monasterio"],
-        key="n_cat",
-    )
-    fecha = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
-    notas = st.text_area(
-        "Notas personales",
-        placeholder="Escribe tus impresiones...",
-        key="n_notas",
-        height=200,
-    )
-    favorita = st.checkbox("⭐ Marcar como favorita", key="n_fav")
+    nombre  = st.text_input("Nombre del templo *", placeholder="Ej: Catedral de Burgos", key="n_nombre")
+    ciudad  = st.text_input("Ciudad", placeholder="Ej: Burgos", key="n_ciudad")
+    pais    = st.text_input("País", placeholder="Ej: España", key="n_pais")
+    cat     = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
+    fecha   = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
+    notas   = st.text_area("Notas personales", placeholder="Tus impresiones...", height=180, key="n_notas")
+    fav     = st.checkbox("⭐ Marcar como favorita", key="n_fav")
 
-    if st.button(
-        "💾 Guardar", type="primary", use_container_width=True, key="btn_nueva"
-    ):
+    if st.button("💾 Guardar", type="primary", use_container_width=True, key="btn_nueva"):
         if not nombre.strip():
-            st.error("El nombre del templo es obligatorio.")
+            st.error("El nombre es obligatorio.")
         else:
-            guardar_nueva({
-                "nombre": nombre,
-                "ciudad": ciudad,
-                "pais": pais,
-                "categoria": categoria,
-                "fecha": str(fecha),
-                "notas": notas,
-                "favorita": favorita,
-                "fotos_b64": fotos_b64_nueva,
-            })
+            with st.spinner("Subiendo fotos..."):
+                urls = procesar_uploads(fotos_up) if fotos_up else []
+            guardar_nuevo({
+                "nombre": nombre, "ciudad": ciudad, "pais": pais,
+                "categoria": cat, "fecha": str(fecha),
+                "notas": notas, "favorita": fav,
+            }, urls)
             st.success(f"✅ '{nombre}' guardado correctamente.")
             st.balloons()
             st.rerun()
@@ -308,100 +291,70 @@ with tab_nueva:
 # TAB EDITAR
 # ════════════════════════════════════════════════════
 with tab_editar:
-    if not iglesias:
-        st.info("Aún no hay iglesias para editar.")
+    if not templos:
+        st.info("Aún no hay templos para editar.")
     else:
-        nombres = [f"{ig['nombre']} ({ig.get('ciudad','')})" for ig in iglesias]
-        seleccion = st.selectbox("Selecciona cuál editar", nombres)
-        ig_edit = iglesias[nombres.index(seleccion)]
-
-        # Migra fotos al vuelo si aún están en fotos_bytes
-        ig_edit = migrar_fotos_si_necesario(ig_edit)
+        nombres = [f"{t['nombre']} ({t.get('ciudad','')})" for t in templos]
+        sel = st.selectbox("Selecciona cuál editar", nombres, key="sel_editar")
+        t_edit = templos[nombres.index(sel)]
         st.divider()
 
-        fotos_actuales_urls = ig_edit.get("fotos_urls") or []
-
-        if fotos_actuales_urls:
-            st.caption(
-                f"📷 Fotos actuales ({len(fotos_actuales_urls)}) — pulsa 🗑️ para eliminar una:"
-            )
-            for i, url in enumerate(fotos_actuales_urls):
-                col_img, col_btn = st.columns([5, 1])
-                with col_img:
+        # Fotos actuales
+        fotos_act = urls_validas(t_edit.get("fotos_urls"))
+        if fotos_act:
+            st.caption(f"📷 Fotos actuales ({len(fotos_act)}) — pulsa 🗑️ para eliminar:")
+            for i, url in enumerate(fotos_act):
+                c1, c2 = st.columns([5, 1])
+                with c1:
                     st.image(url, use_container_width=True)
-                with col_btn:
+                with c2:
                     st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("🗑️", key=f"delfoto_{ig_edit['id']}_{i}"):
-                        nueva_lista = [u for j, u in enumerate(fotos_actuales_urls) if j != i]
-                        db.table("iglesias").update({
-                            "fotos_urls": nueva_lista
-                        }).eq("id", ig_edit["id"]).execute()
-                        st.success(f"Foto {i+1} eliminada.")
+                    if st.button("🗑️", key=f"del_foto_{t_edit['id']}_{i}"):
+                        nueva = [u for j, u in enumerate(fotos_act) if j != i]
+                        db.table("templos").update({"fotos_urls": nueva}).eq("id", t_edit["id"]).execute()
+                        st.success("Foto eliminada.")
                         st.rerun()
 
         st.markdown("**➕ Añadir más fotos:**")
-        fotos_nuevas_up = st.file_uploader(
-            "Selecciona fotos para añadir",
-            type=["jpg", "jpeg", "png", "webp"],
+        fotos_new_up = st.file_uploader(
+            "Selecciona fotos",
+            type=["jpg","jpeg","png","webp"],
             accept_multiple_files=True,
-            key="upload_editar",
+            key="up_editar",
         )
-        fotos_b64_añadir = []
-        if fotos_nuevas_up:
-            cols_new = st.columns(min(len(fotos_nuevas_up), 4))
-            for i, f in enumerate(fotos_nuevas_up):
-                corr = corregir_orientacion(f.read())
-                fotos_b64_añadir.append(base64.b64encode(corr).decode())
+        if fotos_new_up:
+            cols_new = st.columns(min(len(fotos_new_up), 4))
+            for i, f in enumerate(fotos_new_up):
                 with cols_new[i % 4]:
-                    st.image(corr, caption="Nueva", use_container_width=True)
+                    st.image(corregir_orientacion(f.read()), caption="Nueva", use_container_width=True)
+                    f.seek(0)
 
         st.divider()
-        nombre_e = st.text_input(
-            "Nombre *", value=ig_edit.get("nombre", ""), key="e_nombre"
-        )
-        ciudad_e = st.text_input(
-            "Ciudad", value=ig_edit.get("ciudad", ""), key="e_ciudad"
-        )
-        pais_e = st.text_input("País", value=ig_edit.get("pais", ""), key="e_pais")
-        cats_list = ["Iglesia", "Basílica", "Catedral", "Capilla", "Monasterio"]
-        cat_idx = (
-            cats_list.index(ig_edit["categoria"])
-            if ig_edit.get("categoria") in cats_list
-            else 0
-        )
-        categoria_e = st.selectbox("Categoría", cats_list, index=cat_idx, key="e_cat")
+        nombre_e   = st.text_input("Nombre *", value=t_edit.get("nombre",""), key="e_nombre")
+        ciudad_e   = st.text_input("Ciudad", value=t_edit.get("ciudad",""), key="e_ciudad")
+        pais_e     = st.text_input("País", value=t_edit.get("pais",""), key="e_pais")
+        cat_idx    = CATEGORIAS.index(t_edit["categoria"]) if t_edit.get("categoria") in CATEGORIAS else 0
+        cat_e      = st.selectbox("Categoría", CATEGORIAS, index=cat_idx, key="e_cat")
         try:
-            fecha_val = date.fromisoformat(ig_edit.get("fecha", str(date.today())))
+            fecha_val = date.fromisoformat(t_edit.get("fecha", str(date.today())))
         except:
             fecha_val = date.today()
-        fecha_e = st.date_input("Fecha", value=fecha_val, key="e_fecha")
-        notas_e = st.text_area(
-            "Notas", value=ig_edit.get("notas", ""), key="e_notas", height=200
-        )
-        favorita_e = st.checkbox(
-            "⭐ Favorita", value=ig_edit.get("favorita", False), key="e_fav"
-        )
+        fecha_e    = st.date_input("Fecha", value=fecha_val, key="e_fecha")
+        notas_e    = st.text_area("Notas", value=t_edit.get("notas",""), height=180, key="e_notas")
+        fav_e      = st.checkbox("⭐ Favorita", value=t_edit.get("favorita", False), key="e_fav")
 
-        if st.button(
-            "💾 Guardar cambios",
-            type="primary",
-            use_container_width=True,
-            key="btn_editar",
-        ):
+        if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
             if not nombre_e.strip():
                 st.error("El nombre es obligatorio.")
             else:
+                with st.spinner("Subiendo fotos nuevas..."):
+                    urls_nuevas = procesar_uploads(fotos_new_up) if fotos_new_up else []
+                fotos_final = fotos_act + urls_nuevas
                 actualizar({
-                    "id": ig_edit["id"],
-                    "nombre": nombre_e,
-                    "ciudad": ciudad_e,
-                    "pais": pais_e,
-                    "categoria": categoria_e,
-                    "fecha": str(fecha_e),
-                    "notas": notas_e,
-                    "favorita": favorita_e,
-                    "fotos_urls": fotos_actuales_urls,       # URLs que quedaron
-                    "fotos_b64_nuevas": fotos_b64_añadir,    # fotos nuevas a subir
-                })
+                    "id": t_edit["id"],
+                    "nombre": nombre_e, "ciudad": ciudad_e, "pais": pais_e,
+                    "categoria": cat_e, "fecha": str(fecha_e),
+                    "notas": notas_e, "favorita": fav_e,
+                }, fotos_final)
                 st.success(f"✅ '{nombre_e}' actualizado correctamente.")
                 st.rerun()
