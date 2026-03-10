@@ -394,17 +394,46 @@ with tab_editar:
 
         st.divider()
 
-        # Campos precargados desde session_state — siempre muestran el templo correcto
-        nombre_e    = st.text_input("Nombre *",  value=st.session_state.get("_e_nombre",""),    key="e_nombre")
-        ciudad_e    = st.text_input("Ciudad",    value=st.session_state.get("_e_ciudad",""),    key="e_ciudad")
-        pais_e      = st.text_input("País",      value=st.session_state.get("_e_pais",""),      key="e_pais")
-        direccion_e = st.text_input("Dirección", value=st.session_state.get("_e_direccion",""), key="e_direccion")
-        cat_e       = st.selectbox("Categoría", CATEGORIAS,
-                                   index=st.session_state.get("_e_cat_idx", 0),
-                                   key="e_cat")
-        fecha_e     = st.date_input("Fecha",     value=st.session_state.get("_e_fecha", date.today()), key="e_fecha")
-        notas_e     = st.text_area("Notas",      value=st.session_state.get("_e_notas",""),    height=180, key="e_notas")
-        fav_e       = st.checkbox("⭐ Favorita", value=st.session_state.get("_e_fav", False),  key="e_fav")
+# Campos precargados desde session_state — siempre muestran el templo correcto
+
+# Inicializar valores si no existen
+if "e_nombre" not in st.session_state:
+    st.session_state.e_nombre = st.session_state.get("_e_nombre","")
+
+if "e_ciudad" not in st.session_state:
+    st.session_state.e_ciudad = st.session_state.get("_e_ciudad","")
+
+if "e_pais" not in st.session_state:
+    st.session_state.e_pais = st.session_state.get("_e_pais","")
+
+if "e_direccion" not in st.session_state:
+    st.session_state.e_direccion = st.session_state.get("_e_direccion","")
+
+if "e_cat" not in st.session_state:
+    idx = st.session_state.get("_e_cat_idx", 0)
+    st.session_state.e_cat = CATEGORIAS[idx]
+
+if "e_fecha" not in st.session_state:
+    st.session_state.e_fecha = st.session_state.get("_e_fecha", date.today())
+
+if "e_notas" not in st.session_state:
+    st.session_state.e_notas = st.session_state.get("_e_notas","")
+
+if "e_fav" not in st.session_state:
+    st.session_state.e_fav = st.session_state.get("_e_fav", False)
+
+
+# Widgets (sin value)
+nombre_e    = st.text_input("Nombre *", key="e_nombre")
+ciudad_e    = st.text_input("Ciudad", key="e_ciudad")
+pais_e      = st.text_input("País", key="e_pais")
+direccion_e = st.text_input("Dirección", key="e_direccion")
+
+cat_e   = st.selectbox("Categoría", CATEGORIAS, key="e_cat")
+fecha_e = st.date_input("Fecha", key="e_fecha")
+
+notas_e = st.text_area("Notas", height=180, key="e_notas")
+fav_e   = st.checkbox("⭐ Favorita", key="e_fav")
 
         if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
             if not nombre_e.strip():
