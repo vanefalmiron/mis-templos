@@ -341,9 +341,19 @@ with tab_editar:
     else:
         nombres = [f"{t['nombre']} ({t.get('ciudad','')})" for t in templos]
         sel = st.selectbox("Selecciona cuál editar", nombres, key="sel_editar")
-        t_edit = templos[nombres.index(sel)]
-        st.divider()
+        idx_sel = nombres.index(sel)
+        t_edit = templos[idx_sel]
 
+        # Resetea los campos si cambia la selección
+        if st.session_state.get("ultimo_editado") != t_edit["id"]:
+            st.session_state["ultimo_editado"] = t_edit["id"]
+            for k in ["e_nombre","e_ciudad","e_pais","e_direccion","e_cat","e_fecha","e_notas","e_fav"]:
+                if k in st.session_state:
+                    del st.session_state[k]
+            st.rerun()
+
+        st.divider()
+        
         fotos_act = urls_validas(t_edit.get("fotos_urls"))
         if fotos_act:
             st.caption(f"📷 Fotos actuales ({len(fotos_act)}) — pulsa 🗑️ para eliminar:")
