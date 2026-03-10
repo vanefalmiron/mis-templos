@@ -23,7 +23,6 @@ def corregir_orientacion(imagen_bytes):
     return buf.getvalue()
 
 def subir_foto(imagen_bytes):
-    """Sube bytes a Supabase Storage y devuelve la URL pública."""
     nombre = f"{uuid.uuid4()}.jpg"
     path = f"fotos/{nombre}"
     db.storage.from_("templos").upload(
@@ -112,6 +111,15 @@ h1 {
     text-transform: uppercase;
     color: #a08060;
 }
+.notas-texto {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    max-height: none !important;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    padding: 0.5rem 0;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -190,7 +198,6 @@ def mostrar_miniaturas(fotos, clave):
     fotos = urls_validas(fotos)
     if not fotos:
         return
-    # Muestra solo la primera foto como preview
     st.image(fotos[0], width=150)
     if st.button(f"🖼️ Ver fotos ({len(fotos)})", key=f"lb_{clave}"):
         st.session_state.lightbox = fotos[0]
@@ -236,7 +243,13 @@ with tab_lista:
                         f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
                     )
                     if t.get("notas"):
-                        st.markdown(f'<div style="white-space: pre-wrap; word-wrap: break-word; overflow: visible;">{t["notas"]}</div>', unsafe_allow_html=True)
+                        # Escapar caracteres HTML especiales para evitar rotura
+                        import html as html_lib
+                        notas_escaped = html_lib.escape(t["notas"])
+                        st.markdown(
+                            f'<p class="notas-texto">{notas_escaped}</p>',
+                            unsafe_allow_html=True
+                        )
                 with col_btns:
                     if st.button("🗑️", key=f"del_{t['id']}", help="Eliminar"):
                         eliminar(t["id"])
@@ -259,7 +272,6 @@ with tab_nueva:
         key="up_nueva",
     )
 
-    # Leer todos los bytes ANTES de mostrar el preview
     fotos_bytes_nueva = []
     if fotos_up:
         for f in fotos_up:
@@ -310,7 +322,6 @@ with tab_editar:
         t_edit = templos[nombres.index(sel)]
         st.divider()
 
-        # Fotos actuales
         fotos_act = urls_validas(t_edit.get("fotos_urls"))
         if fotos_act:
             st.caption(f"📷 Fotos actuales ({len(fotos_act)}) — pulsa 🗑️ para eliminar:")
@@ -334,7 +345,6 @@ with tab_editar:
             key="up_editar",
         )
 
-        # Leer todos los bytes ANTES de mostrar el preview
         fotos_bytes_editar = []
         if fotos_new_up:
             for f in fotos_new_up:
