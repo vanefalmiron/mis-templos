@@ -435,7 +435,7 @@ fecha_e = st.date_input("Fecha", key="e_fecha")
 notas_e = st.text_area("Notas", height=180, key="e_notas")
 fav_e   = st.checkbox("⭐ Favorita", key="e_fav")
 
-        if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
+if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
             if not nombre_e.strip():
                 st.error("El nombre es obligatorio.")
             else:
