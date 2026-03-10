@@ -1,12 +1,12 @@
 import streamlit as st
 from datetime import date
-import os, base64, io, uuid
+import os, io, uuid
 from PIL import Image, ImageOps
 from supabase import create_client
 
 # ── Conexión a Supabase ───────────────────────────────────────────
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://deemrewpebmxvocfvesh.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_HDy1NgJqXFXLxdTUJ5yM4A_pIva_zjP")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 @st.cache_resource
 def get_client():
@@ -33,18 +33,6 @@ def subir_foto(imagen_bytes):
     )
     return db.storage.from_("templos").get_public_url(path)
 
-def procesar_uploads(archivos):
-    """Recibe lista de UploadedFile, corrige orientación y sube a Storage. Devuelve URLs."""
-    urls = []
-    for f in archivos:
-        try:
-            corr = corregir_orientacion(f.read())
-            url = subir_foto(corr)
-            urls.append(url)
-        except Exception as e:
-            st.warning(f"No se pudo subir una foto: {e}")
-    return urls
-
 def urls_validas(lista):
     return [u for u in (lista or []) if isinstance(u, str) and u.startswith("http")]
 
@@ -55,25 +43,25 @@ def cargar():
 
 def guardar_nuevo(ig, fotos_urls):
     db.table("templos").insert({
-        "nombre":    ig["nombre"],
-        "ciudad":    ig["ciudad"],
-        "pais":      ig["pais"],
-        "categoria": ig["categoria"],
-        "fecha":     ig["fecha"],
-        "notas":     ig["notas"],
-        "favorita":  ig["favorita"],
+        "nombre":     ig["nombre"],
+        "ciudad":     ig["ciudad"],
+        "pais":       ig["pais"],
+        "categoria":  ig["categoria"],
+        "fecha":      ig["fecha"],
+        "notas":      ig["notas"],
+        "favorita":   ig["favorita"],
         "fotos_urls": fotos_urls,
     }).execute()
 
 def actualizar(ig, fotos_urls):
     db.table("templos").update({
-        "nombre":    ig["nombre"],
-        "ciudad":    ig["ciudad"],
-        "pais":      ig["pais"],
-        "categoria": ig["categoria"],
-        "fecha":     ig["fecha"],
-        "notas":     ig["notas"],
-        "favorita":  ig["favorita"],
+        "nombre":     ig["nombre"],
+        "ciudad":     ig["ciudad"],
+        "pais":       ig["pais"],
+        "categoria":  ig["categoria"],
+        "fecha":      ig["fecha"],
+        "notas":      ig["notas"],
+        "favorita":   ig["favorita"],
         "fotos_urls": fotos_urls,
     }).eq("id", ig["id"]).execute()
 
@@ -123,13 +111,6 @@ h1 {
     letter-spacing: .1em;
     text-transform: uppercase;
     color: #a08060;
-}
-.templo-card {
-    background: linear-gradient(135deg, #0f0a04 0%, #1e1508 100%);
-    border: 1px solid #b8883a33;
-    border-radius: 12px;
-    padding: 1.2rem 1.5rem;
-    margin-bottom: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -184,7 +165,7 @@ CATEGORIAS = [
     "Santuario", "Otro",
 ]
 
-# ── Helper fotos ─────────────────────────────────────────────────
+# ── Helper fotos ──────────────────────────────────────────────────
 def mostrar_miniaturas(fotos, clave):
     fotos = urls_validas(fotos)
     if not fotos:
@@ -257,27 +238,37 @@ with tab_nueva:
         accept_multiple_files=True,
         key="up_nueva",
     )
-    if fotos_up:
-        prev = st.columns(min(len(fotos_up), 4))
-        for i, f in enumerate(fotos_up):
-            with prev[i % 4]:
-                st.image(corregir_orientacion(f.read()), use_container_width=True)
-                f.seek(0)  # reset para poder leerlo al guardar
 
-    nombre  = st.text_input("Nombre del templo *", placeholder="Ej: Catedral de Burgos", key="n_nombre")
-    ciudad  = st.text_input("Ciudad", placeholder="Ej: Burgos", key="n_ciudad")
-    pais    = st.text_input("País", placeholder="Ej: España", key="n_pais")
-    cat     = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
-    fecha   = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
-    notas   = st.text_area("Notas personales", placeholder="Tus impresiones...", height=180, key="n_notas")
-    fav     = st.checkbox("⭐ Marcar como favorita", key="n_fav")
+    # Leer todos los bytes ANTES de mostrar el preview
+    fotos_bytes_nueva = []
+    if fotos_up:
+        for f in fotos_up:
+            fotos_bytes_nueva.append(f.read())
+        prev = st.columns(min(len(fotos_bytes_nueva), 4))
+        for i, datos in enumerate(fotos_bytes_nueva):
+            with prev[i % 4]:
+                st.image(corregir_orientacion(datos), use_container_width=True)
+
+    nombre = st.text_input("Nombre del templo *", placeholder="Ej: Catedral de Burgos", key="n_nombre")
+    ciudad = st.text_input("Ciudad", placeholder="Ej: Burgos", key="n_ciudad")
+    pais   = st.text_input("País", placeholder="Ej: España", key="n_pais")
+    cat    = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
+    fecha  = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
+    notas  = st.text_area("Notas personales", placeholder="Tus impresiones...", height=180, key="n_notas")
+    fav    = st.checkbox("⭐ Marcar como favorita", key="n_fav")
 
     if st.button("💾 Guardar", type="primary", use_container_width=True, key="btn_nueva"):
         if not nombre.strip():
             st.error("El nombre es obligatorio.")
         else:
             with st.spinner("Subiendo fotos..."):
-                urls = procesar_uploads(fotos_up) if fotos_up else []
+                urls = []
+                for datos in fotos_bytes_nueva:
+                    try:
+                        url = subir_foto(corregir_orientacion(datos))
+                        urls.append(url)
+                    except Exception as e:
+                        st.warning(f"No se pudo subir una foto: {e}")
             guardar_nuevo({
                 "nombre": nombre, "ciudad": ciudad, "pais": pais,
                 "categoria": cat, "fecha": str(fecha),
@@ -322,33 +313,43 @@ with tab_editar:
             accept_multiple_files=True,
             key="up_editar",
         )
+
+        # Leer todos los bytes ANTES de mostrar el preview
+        fotos_bytes_editar = []
         if fotos_new_up:
-            cols_new = st.columns(min(len(fotos_new_up), 4))
-            for i, f in enumerate(fotos_new_up):
+            for f in fotos_new_up:
+                fotos_bytes_editar.append(f.read())
+            cols_new = st.columns(min(len(fotos_bytes_editar), 4))
+            for i, datos in enumerate(fotos_bytes_editar):
                 with cols_new[i % 4]:
-                    st.image(corregir_orientacion(f.read()), caption="Nueva", use_container_width=True)
-                    f.seek(0)
+                    st.image(corregir_orientacion(datos), caption="Nueva", use_container_width=True)
 
         st.divider()
-        nombre_e   = st.text_input("Nombre *", value=t_edit.get("nombre",""), key="e_nombre")
-        ciudad_e   = st.text_input("Ciudad", value=t_edit.get("ciudad",""), key="e_ciudad")
-        pais_e     = st.text_input("País", value=t_edit.get("pais",""), key="e_pais")
-        cat_idx    = CATEGORIAS.index(t_edit["categoria"]) if t_edit.get("categoria") in CATEGORIAS else 0
-        cat_e      = st.selectbox("Categoría", CATEGORIAS, index=cat_idx, key="e_cat")
+        nombre_e = st.text_input("Nombre *", value=t_edit.get("nombre",""), key="e_nombre")
+        ciudad_e = st.text_input("Ciudad", value=t_edit.get("ciudad",""), key="e_ciudad")
+        pais_e   = st.text_input("País", value=t_edit.get("pais",""), key="e_pais")
+        cat_idx  = CATEGORIAS.index(t_edit["categoria"]) if t_edit.get("categoria") in CATEGORIAS else 0
+        cat_e    = st.selectbox("Categoría", CATEGORIAS, index=cat_idx, key="e_cat")
         try:
             fecha_val = date.fromisoformat(t_edit.get("fecha", str(date.today())))
         except:
             fecha_val = date.today()
-        fecha_e    = st.date_input("Fecha", value=fecha_val, key="e_fecha")
-        notas_e    = st.text_area("Notas", value=t_edit.get("notas",""), height=180, key="e_notas")
-        fav_e      = st.checkbox("⭐ Favorita", value=t_edit.get("favorita", False), key="e_fav")
+        fecha_e  = st.date_input("Fecha", value=fecha_val, key="e_fecha")
+        notas_e  = st.text_area("Notas", value=t_edit.get("notas",""), height=180, key="e_notas")
+        fav_e    = st.checkbox("⭐ Favorita", value=t_edit.get("favorita", False), key="e_fav")
 
         if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
             if not nombre_e.strip():
                 st.error("El nombre es obligatorio.")
             else:
                 with st.spinner("Subiendo fotos nuevas..."):
-                    urls_nuevas = procesar_uploads(fotos_new_up) if fotos_new_up else []
+                    urls_nuevas = []
+                    for datos in fotos_bytes_editar:
+                        try:
+                            url = subir_foto(corregir_orientacion(datos))
+                            urls_nuevas.append(url)
+                        except Exception as e:
+                            st.warning(f"No se pudo subir una foto: {e}")
                 fotos_final = fotos_act + urls_nuevas
                 actualizar({
                     "id": t_edit["id"],
