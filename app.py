@@ -393,47 +393,20 @@ with tab_editar:
                     st.image(corregir_orientacion(datos), caption="Nueva", use_container_width=True)
 
         st.divider()
-
-        # Campos precargados desde session_state — siempre muestran el templo correcto
-
-# Inicializar valores si no existen
-if "e_nombre" not in st.session_state:
-    st.session_state.e_nombre = st.session_state.get("_e_nombre","")
-
-if "e_ciudad" not in st.session_state:
-    st.session_state.e_ciudad = st.session_state.get("_e_ciudad","")
-
-if "e_pais" not in st.session_state:
-    st.session_state.e_pais = st.session_state.get("_e_pais","")
-
-if "e_direccion" not in st.session_state:
-    st.session_state.e_direccion = st.session_state.get("_e_direccion","")
-
-if "e_cat" not in st.session_state:
-    idx = st.session_state.get("_e_cat_idx", 0)
-    st.session_state.e_cat = CATEGORIAS[idx]
-
-if "e_fecha" not in st.session_state:
-    st.session_state.e_fecha = st.session_state.get("_e_fecha", date.today())
-
-if "e_notas" not in st.session_state:
-    st.session_state.e_notas = st.session_state.get("_e_notas","")
-
-if "e_fav" not in st.session_state:
-    st.session_state.e_fav = st.session_state.get("_e_fav", False)
-
-
-# Widgets (sin value)
-nombre_e    = st.text_input("Nombre *", key="e_nombre")
-ciudad_e    = st.text_input("Ciudad", key="e_ciudad")
-pais_e      = st.text_input("País", key="e_pais")
-direccion_e = st.text_input("Dirección", key="e_direccion")
-
-cat_e   = st.selectbox("Categoría", CATEGORIAS, key="e_cat")
-fecha_e = st.date_input("Fecha", key="e_fecha")
-
-notas_e = st.text_area("Notas", height=180, key="e_notas")
-fav_e   = st.checkbox("⭐ Favorita", key="e_fav")
+        
+        nombre_e   = st.text_input("Nombre *", value=t_edit.get("nombre",""), key="e_nombre")
+        ciudad_e   = st.text_input("Ciudad", value=t_edit.get("ciudad",""), key="e_ciudad")
+        pais_e     = st.text_input("País", value=t_edit.get("pais",""), key="e_pais")
+        direccion_e = st.text_input("Dirección", value=t_edit.get("direccion",""), key="e_direccion")
+        cat_idx    = CATEGORIAS.index(t_edit["categoria"]) if t_edit.get("categoria") in CATEGORIAS else 0
+        cat_e      = st.selectbox("Categoría", CATEGORIAS, index=cat_idx, key="e_cat")
+        try:
+            fecha_val = date.fromisoformat(t_edit.get("fecha", str(date.today())))
+        except:
+            fecha_val = date.today()
+        fecha_e    = st.date_input("Fecha", value=fecha_val, key="e_fecha")
+        notas_e    = st.text_area("Notas", value=t_edit.get("notas",""), height=180, key="e_notas")
+        fav_e      = st.checkbox("⭐ Favorita", value=t_edit.get("favorita", False), key="e_fav")
 
 if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
             if not nombre_e.strip():
