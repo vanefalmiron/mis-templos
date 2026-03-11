@@ -247,7 +247,6 @@ with tab_lista:
         for t in filtrados:
             fotos = urls_validas(t.get("fotos_urls"))
             with st.container():
-                mostrar_miniaturas(fotos, t["id"])
                 col_info, col_btns = st.columns([6, 1])
                 with col_info:
                     fav = "⭐" if t.get("favorita") else "☆"
@@ -273,6 +272,8 @@ with tab_lista:
                         if st.session_state.admin:
                             toggle_fav(t)
                             st.rerun()
+                # Fotos debajo de la dirección
+                mostrar_miniaturas(fotos, t["id"])
                 if t.get("notas"):
                     notas_escaped = html_lib.escape(t["notas"])
                     st.markdown(
