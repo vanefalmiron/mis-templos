@@ -276,6 +276,7 @@ with tab_lista:
                             toggle_fav(t)
                             st.rerun()
                 # Fotos debajo de la dirección
+                st.markdown("<br>", unsafe_allow_html=True)
                 mostrar_miniaturas(fotos, t["id"])
                 if t.get("notas"):
                     notas_escaped = html_lib.escape(t["notas"])
