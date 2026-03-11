@@ -55,30 +55,28 @@ def cargar():
 
 def guardar_nuevo(ig, fotos_urls):
     db.table("templos").insert({
-        "nombre":      ig["nombre"],
-        "ciudad":      ig["ciudad"],
-        "pais":        ig["pais"],
-        "direccion":   ig["direccion"],
-        "categoria":   ig["categoria"],
-        "fecha":       ig["fecha"],
-        "descripcion": ig["descripcion"],
-        "notas":       ig["notas"],
-        "favorita":    ig["favorita"],
-        "fotos_urls":  fotos_urls,
+        "nombre":     ig["nombre"],
+        "ciudad":     ig["ciudad"],
+        "pais":       ig["pais"],
+        "direccion":  ig["direccion"],
+        "categoria":  ig["categoria"],
+        "fecha":      ig["fecha"],
+        "notas":      ig["notas"],
+        "favorita":   ig["favorita"],
+        "fotos_urls": fotos_urls,
     }).execute()
 
 def actualizar(ig, fotos_urls):
     db.table("templos").update({
-        "nombre":      ig["nombre"],
-        "ciudad":      ig["ciudad"],
-        "pais":        ig["pais"],
-        "direccion":   ig["direccion"],
-        "categoria":   ig["categoria"],
-        "fecha":       ig["fecha"],
-        "descripcion": ig["descripcion"],
-        "notas":       ig["notas"],
-        "favorita":    ig["favorita"],
-        "fotos_urls":  fotos_urls,
+        "nombre":     ig["nombre"],
+        "ciudad":     ig["ciudad"],
+        "pais":       ig["pais"],
+        "direccion":  ig["direccion"],
+        "categoria":  ig["categoria"],
+        "fecha":      ig["fecha"],
+        "notas":      ig["notas"],
+        "favorita":   ig["favorita"],
+        "fotos_urls": fotos_urls,
     }).eq("id", ig["id"]).execute()
 
 def eliminar(ig_id):
@@ -134,14 +132,6 @@ h1 {
     font-size: 0.95rem;
     line-height: 1.6;
     padding: 0.5rem 0;
-}
-.desc-texto {
-    white-space: pre-wrap !important;
-    word-break: break-word !important;
-    font-size: 0.92rem;
-    line-height: 1.65;
-    color: #444;
-    padding: 0.2rem 0 0.5rem 0;
 }
 .maps-link a {
     color: #b8883a !important;
@@ -226,7 +216,7 @@ def mostrar_miniaturas(fotos, clave):
         st.session_state.lightbox_idx = 0
         st.rerun()
 
-# ── Tabs ──────────────────────────────────────────────────────────
+# ── Tabs — solo admin ve Añadir y Editar ──────────────────────────
 if st.session_state.admin:
     tab_lista, tab_nueva, tab_editar = st.tabs(["📋 Mi lista", "➕ Añadir", "✏️ Editar"])
 else:
@@ -257,50 +247,32 @@ with tab_lista:
         for t in filtrados:
             fotos = urls_validas(t.get("fotos_urls"))
             with st.container():
-
-                # ── Foto + Descripción lado a lado ──────────────
-                col_foto, col_desc = st.columns([1, 2])
-                with col_foto:
-                    if fotos:
-                        st.image(fotos[0], use_container_width=True)
-                        if st.button(f"🖼️ Ver fotos ({len(fotos)})", key=f"lb_{t['id']}"):
-                            st.session_state.lightbox = fotos[0]
-                            st.session_state.lightbox_fotos = fotos
-                            st.session_state.lightbox_idx = 0
-                            st.rerun()
-                with col_desc:
+                mostrar_miniaturas(fotos, t["id"])
+                col_info, col_btns = st.columns([6, 1])
+                with col_info:
                     fav = "⭐" if t.get("favorita") else "☆"
-                    col_titulo, col_btns = st.columns([5, 1])
-                    with col_titulo:
-                        st.subheader(f"{fav} {t.get('nombre','')}")
-                        st.caption(
-                            f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
-                            f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
+                    st.subheader(f"{fav} {t.get('nombre','')}")
+                    st.caption(
+                        f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
+                        f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
+                    )
+                    if t.get("direccion"):
+                        dir_escaped = html_lib.escape(t["direccion"])
+                        url = maps_url(t["direccion"])
+                        st.markdown(
+                            f'<div class="maps-link">🗺️ <a href="{url}" target="_blank">{dir_escaped}</a></div>',
+                            unsafe_allow_html=True
                         )
-                        if t.get("direccion"):
-                            dir_escaped = html_lib.escape(t["direccion"])
-                            url = maps_url(t["direccion"])
-                            st.markdown(
-                                f'<div class="maps-link">🗺️ <a href="{url}" target="_blank">{dir_escaped}</a></div>',
-                                unsafe_allow_html=True
-                            )
-                        if t.get("descripcion"):
-                            desc_escaped = html_lib.escape(t["descripcion"])
-                            st.markdown(
-                                f'<p class="desc-texto">{desc_escaped}</p>',
-                                unsafe_allow_html=True
-                            )
-                    with col_btns:
+                # Botones eliminar/favorito solo para admin
+                with col_btns:
+                    if st.session_state.admin:
+                        if st.button("🗑️", key=f"del_{t['id']}", help="Eliminar"):
+                            eliminar(t["id"])
+                            st.rerun()
+                    if st.button("★" if t.get("favorita") else "☆", key=f"fav_{t['id']}"):
                         if st.session_state.admin:
-                            if st.button("🗑️", key=f"del_{t['id']}", help="Eliminar"):
-                                eliminar(t["id"])
-                                st.rerun()
-                        if st.button("★" if t.get("favorita") else "☆", key=f"fav_{t['id']}"):
-                            if st.session_state.admin:
-                                toggle_fav(t)
-                                st.rerun()
-
-                # ── Notas (ancho completo, debajo) ──────────────
+                            toggle_fav(t)
+                            st.rerun()
                 if t.get("notas"):
                     notas_escaped = html_lib.escape(t["notas"])
                     st.markdown(
@@ -348,15 +320,14 @@ if st.session_state.admin:
                 with prev[i % 4]:
                     st.image(corregir_orientacion(datos), use_container_width=True)
 
-        nombre      = st.text_input("Nombre del templo *", placeholder="Ej: Catedral de Burgos", key="n_nombre")
-        ciudad      = st.text_input("Ciudad", placeholder="Ej: Burgos", key="n_ciudad")
-        pais        = st.text_input("País", placeholder="Ej: España", key="n_pais")
-        direccion   = st.text_input("Dirección", placeholder="Ej: Pl. de la Catedral, s/n, Burgos", key="n_direccion")
-        cat         = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
-        fecha       = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
-        descripcion = st.text_area("Descripción", placeholder="Breve descripción del lugar que aparecerá junto a la foto...", height=120, key="n_descripcion")
-        notas       = st.text_area("Notas personales", placeholder="Tus impresiones privadas...", height=150, key="n_notas")
-        fav         = st.checkbox("⭐ Marcar como favorita", key="n_fav")
+        nombre    = st.text_input("Nombre del templo *", placeholder="Ej: Catedral de Burgos", key="n_nombre")
+        ciudad    = st.text_input("Ciudad", placeholder="Ej: Burgos", key="n_ciudad")
+        pais      = st.text_input("País", placeholder="Ej: España", key="n_pais")
+        direccion = st.text_input("Dirección", placeholder="Ej: Pl. de la Catedral, s/n, Burgos", key="n_direccion")
+        cat       = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
+        fecha     = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
+        notas     = st.text_area("Notas personales", placeholder="Tus impresiones...", height=180, key="n_notas")
+        fav       = st.checkbox("⭐ Marcar como favorita", key="n_fav")
 
         if st.button("💾 Guardar", type="primary", use_container_width=True, key="btn_nueva"):
             if not nombre.strip():
@@ -373,7 +344,7 @@ if st.session_state.admin:
                 guardar_nuevo({
                     "nombre": nombre, "ciudad": ciudad, "pais": pais,
                     "direccion": direccion, "categoria": cat, "fecha": str(fecha),
-                    "descripcion": descripcion, "notas": notas, "favorita": fav,
+                    "notas": notas, "favorita": fav,
                 }, urls)
                 st.success(f"✅ '{nombre}' guardado correctamente.")
                 st.balloons()
@@ -431,17 +402,15 @@ if st.session_state.admin:
             except:
                 fecha_val = date.today()
 
-            nombre_e      = st.text_input("Nombre *",    value=t_edit.get("nombre",""),              key=f"e_nombre_{tid}")
-            ciudad_e      = st.text_input("Ciudad",      value=t_edit.get("ciudad",""),               key=f"e_ciudad_{tid}")
-            pais_e        = st.text_input("País",        value=t_edit.get("pais",""),                 key=f"e_pais_{tid}")
-            direccion_e   = st.text_input("Dirección",   value=t_edit.get("direccion","") or "",      key=f"e_direccion_{tid}")
-            cat_e         = st.selectbox("Categoría", CATEGORIAS, index=cat_idx,                      key=f"e_cat_{tid}")
-            fecha_e       = st.date_input("Fecha",       value=fecha_val,                             key=f"e_fecha_{tid}")
-            descripcion_e = st.text_area("Descripción",  value=t_edit.get("descripcion","") or "",
-                                         height=120,                                                   key=f"e_descripcion_{tid}")
-            notas_e       = st.text_area("Notas", height=150,
-                                         value=t_edit.get("notas","") or "",                          key=f"e_notas_{tid}")
-            fav_e         = st.checkbox("⭐ Favorita",   value=t_edit.get("favorita", False),         key=f"e_fav_{tid}")
+            nombre_e    = st.text_input("Nombre *",    value=t_edit.get("nombre",""),         key=f"e_nombre_{tid}")
+            ciudad_e    = st.text_input("Ciudad",      value=t_edit.get("ciudad",""),          key=f"e_ciudad_{tid}")
+            pais_e      = st.text_input("País",        value=t_edit.get("pais",""),            key=f"e_pais_{tid}")
+            direccion_e = st.text_input("Dirección",   value=t_edit.get("direccion","") or "", key=f"e_direccion_{tid}")
+            cat_e       = st.selectbox("Categoría", CATEGORIAS, index=cat_idx,                 key=f"e_cat_{tid}")
+            fecha_e     = st.date_input("Fecha",       value=fecha_val,                        key=f"e_fecha_{tid}")
+            notas_e     = st.text_area("Notas", height=180,
+                                       value=t_edit.get("notas","") or "",                     key=f"e_notas_{tid}")
+            fav_e       = st.checkbox("⭐ Favorita",   value=t_edit.get("favorita", False),    key=f"e_fav_{tid}")
 
             if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
                 if not nombre_e.strip():
@@ -460,7 +429,7 @@ if st.session_state.admin:
                         "id": t_edit["id"],
                         "nombre": nombre_e, "ciudad": ciudad_e, "pais": pais_e,
                         "direccion": direccion_e, "categoria": cat_e, "fecha": str(fecha_e),
-                        "descripcion": descripcion_e, "notas": notas_e, "favorita": fav_e,
+                        "notas": notas_e, "favorita": fav_e,
                     }, fotos_final)
                     st.success(f"✅ '{nombre_e}' actualizado correctamente.")
                     st.rerun()
