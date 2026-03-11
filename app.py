@@ -209,7 +209,10 @@ def mostrar_miniaturas(fotos, clave):
     fotos = urls_validas(fotos)
     if not fotos:
         return
-    st.image(fotos[0], width=150)
+    cols = st.columns(min(len(fotos), 4))
+    for i, url in enumerate(fotos):
+        with cols[i % 4]:
+            st.image(url, width=140)
     if st.button(f"🖼️ Ver fotos ({len(fotos)})", key=f"lb_{clave}"):
         st.session_state.lightbox = fotos[0]
         st.session_state.lightbox_fotos = fotos
