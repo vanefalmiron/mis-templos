@@ -92,13 +92,62 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&display=swap');
 
 html, body, [class*="css"] { font-family: 'Lato', sans-serif; }
-h1 {
-    font-family: 'Cinzel', serif !important;
-    color: #b8883a !important;
-    text-align: center;
-    letter-spacing: .15em;
-    font-size: 2rem !important;
+.temple-header { text-align: center; padding: 0.5rem 0 0.5rem; }
+.temple-pediment {
+    width: 0; height: 0;
+    border-left: 90px solid transparent;
+    border-right: 90px solid transparent;
+    border-bottom: 24px solid #b8883a33;
+    margin: 0 auto;
+    position: relative;
 }
+.temple-pediment::after {
+    content: '';
+    position: absolute;
+    left: -90px; top: 0;
+    width: 180px; height: 0;
+    border-bottom: 2px solid #b8883a66;
+}
+.temple-frieze {
+    display: flex; justify-content: center; align-items: stretch;
+    width: 180px; margin: 0 auto;
+    background: linear-gradient(180deg, #b8883a22, #b8883a08);
+    border-left: 1px solid #b8883a55; border-right: 1px solid #b8883a55;
+    padding: 4px 8px; gap: 6px;
+}
+.temple-dentil {
+    width: 7px; height: 10px;
+    background: #b8883a55; border-radius: 1px 1px 0 0; flex-shrink: 0;
+}
+.temple-colonnade {
+    display: flex; justify-content: center; align-items: stretch;
+    margin: 0 auto; gap: 0;
+}
+.temple-col-shaft {
+    width: 10px; flex-shrink: 0;
+    background: linear-gradient(90deg, #b8883a0a, #b8883a22, #b8883a0a);
+    border-left: 1px solid #b8883a44; border-right: 1px solid #b8883a44;
+}
+.temple-inner {
+    padding: 0.6rem 1.8rem 0.4rem; min-width: 160px;
+}
+.temple-title {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem; font-weight: 600;
+    color: #b8883a;
+    letter-spacing: 0.35em; text-transform: uppercase;
+    margin: 0; line-height: 1.1;
+    text-shadow: 0 2px 24px rgba(184,136,58,0.25);
+}
+.temple-ornament { color: #b8883a66; font-size: 0.65rem; letter-spacing: 0.55em; margin: 0.25rem 0; }
+.temple-subtitle {
+    font-size: 0.7rem; color: #a08060;
+    letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.3rem;
+}
+.temple-step { margin: 0 auto; height: 5px; border-bottom: 1px solid #b8883a44; }
+.temple-step-1 { width: 180px; }
+.temple-step-2 { width: 160px; border-bottom-color: #b8883a33; }
+.temple-step-3 { width: 140px; border-bottom-color: #b8883a1a; }
 .stTabs [data-baseweb="tab"] {
     font-family: 'Cinzel', serif;
     font-size: 0.8rem;
@@ -179,8 +228,33 @@ if st.session_state.lightbox:
 templos = cargar()
 
 # ── Cabecera ──────────────────────────────────────────────────────
-st.title("✦ Mis Templos ✦")
-st.caption("Registro personal de lugares sagrados visitados")
+st.markdown("""
+<div class="temple-header">
+    <div class="temple-pediment"></div>
+    <div class="temple-frieze">
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+    </div>
+    <div class="temple-colonnade">
+        <div class="temple-col-shaft"></div>
+        <div class="temple-inner">
+            <div class="temple-ornament">✦ &nbsp;&nbsp;&nbsp; ✦ &nbsp;&nbsp;&nbsp; ✦</div>
+            <div class="temple-title">Mis&nbsp;Templos</div>
+            <div class="temple-ornament">✦ &nbsp;&nbsp;&nbsp; ✦ &nbsp;&nbsp;&nbsp; ✦</div>
+            <div class="temple-subtitle">Registro personal de lugares sagrados visitados</div>
+        </div>
+        <div class="temple-col-shaft"></div>
+    </div>
+    <div class="temple-step temple-step-1"></div>
+    <div class="temple-step temple-step-2"></div>
+    <div class="temple-step temple-step-3"></div>
+</div>
+""", unsafe_allow_html=True)
 st.markdown("")
 
 col1, col2, col3 = st.columns(3)
