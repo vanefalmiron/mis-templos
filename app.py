@@ -93,130 +93,40 @@ st.markdown("""
 
 html, body, [class*="css"] { font-family: 'Lato', sans-serif; }
 .temple-header { text-align: center; padding: 0.5rem 0 0.5rem; }
-.temple-dome-wrap {
-    position: relative; width: 180px; height: 72px; margin: 0 auto; overflow: hidden;
+.temple-pediment {
+    width: 0; height: 0;
+    border-left: 90px solid transparent;
+    border-right: 90px solid transparent;
+    border-bottom: 24px solid #b8883a33;
+    margin: 0 auto;
+    position: relative;
 }
-/* Cuerpo principal de la cúpula */
-.temple-dome {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 140px;
-    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-    /* Volumen esférico igual que las columnas */
-    background: linear-gradient(90deg,
-        rgba(26,18,9,0.9)       0%,
-        rgba(184,136,58,0.4)   22%,
-        rgba(232,213,163,0.28) 50%,
-        rgba(184,136,58,0.38)  78%,
-        rgba(26,18,9,0.9)     100%
-    );
-    border-left:  1px solid #b8883a55;
-    border-right: 1px solid #b8883a55;
-    border-top:   1px solid #b8883a77;
-    overflow: hidden;
-}
-/* Meridianos helicoidales — misma inclinación que la espiral salomónica */
-.temple-dome::before {
+.temple-pediment::after {
     content: '';
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(
-        -52deg,
-        transparent        0px,
-        transparent        8px,
-        rgba(26,18,9,0.5)  8px,
-        rgba(26,18,9,0.5) 12px,
-        transparent       12px,
-        transparent       22px
-    );
-    border-radius: inherit;
+    position: absolute;
+    left: -90px; top: 0;
+    width: 180px; height: 0;
+    border-bottom: 2px solid #b8883a66;
 }
-/* Reflejo de luz */
-.temple-dome::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(
-        -52deg,
-        transparent             0px,
-        transparent             8px,
-        rgba(232,213,163,0.1)   8px,
-        rgba(232,213,163,0.1)   9px,
-        transparent             9px,
-        transparent            22px
-    );
-    border-radius: inherit;
+.temple-frieze {
+    display: flex; justify-content: center; align-items: stretch;
+    width: 180px; margin: 0 auto;
+    background: linear-gradient(180deg, #b8883a22, #b8883a08);
+    border-left: 1px solid #b8883a55; border-right: 1px solid #b8883a55;
+    padding: 4px 8px; gap: 6px;
 }
-/* Linterna en el vértice de la cúpula */
-.temple-lantern {
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 18px; height: 14px;
-    background: linear-gradient(90deg,
-        rgba(26,18,9,0.8) 0%,
-        rgba(184,136,58,0.5) 50%,
-        rgba(26,18,9,0.8) 100%
-    );
-    border: 1px solid #b8883a77;
-    border-radius: 3px 3px 0 0;
-}
-/* Tambor en la base de la cúpula */
-.temple-drum {
-    height: 10px; width: 180px; margin: 0 auto;
-    background: linear-gradient(90deg,
-        rgba(26,18,9,0.85) 0%,
-        rgba(184,136,58,0.35) 30%,
-        rgba(232,213,163,0.2) 50%,
-        rgba(184,136,58,0.33) 70%,
-        rgba(26,18,9,0.85) 100%
-    );
-    border-left:  1px solid #b8883a55;
-    border-right: 1px solid #b8883a55;
-    border-bottom: 1px solid #b8883a44;
+.temple-dentil {
+    width: 7px; height: 10px;
+    background: #b8883a55; border-radius: 1px 1px 0 0; flex-shrink: 0;
 }
 .temple-colonnade {
     display: flex; justify-content: center; align-items: stretch;
     margin: 0 auto; gap: 0;
 }
 .temple-col-shaft {
-    width: 14px; flex-shrink: 0; position: relative; overflow: hidden;
-    /* Volumen cilíndrico */
-    background: linear-gradient(90deg,
-        rgba(26,18,9,0.85) 0%,
-        rgba(184,136,58,0.45) 28%,
-        rgba(232,213,163,0.35) 50%,
-        rgba(184,136,58,0.4) 72%,
-        rgba(26,18,9,0.85) 100%
-    );
-    border-radius: 2px;
-    border-left: 1px solid #b8883a55;
-    border-right: 1px solid #b8883a55;
-}
-/* Espiral helicoidal salomónica */
-.temple-col-shaft::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-        -52deg,
-        transparent        0px,
-        transparent        5px,
-        rgba(26,18,9,0.55) 5px,
-        rgba(26,18,9,0.55) 8px,
-        transparent        8px,
-        transparent       14px
-    );
-}
-/* Reflejo de luz sobre la espiral */
-.temple-col-shaft::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-        -52deg,
-        transparent              0px,
-        transparent              5px,
-        rgba(232,213,163,0.12)   5px,
-        rgba(232,213,163,0.12)   6px,
-        transparent              6px,
-        transparent             14px
-    );
+    width: 10px; flex-shrink: 0;
+    background: linear-gradient(90deg, #b8883a0a, #b8883a22, #b8883a0a);
+    border-left: 1px solid #b8883a44; border-right: 1px solid #b8883a44;
 }
 .temple-inner {
     padding: 0.6rem 1.8rem 0.4rem; min-width: 160px;
@@ -320,11 +230,16 @@ templos = cargar()
 # ── Cabecera ──────────────────────────────────────────────────────
 st.markdown("""
 <div class="temple-header">
-    <div class="temple-dome-wrap">
-        <div class="temple-lantern"></div>
-        <div class="temple-dome"></div>
+    <div class="temple-pediment"></div>
+    <div class="temple-frieze">
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+        <div class="temple-dentil"></div><div class="temple-dentil"></div>
     </div>
-    <div class="temple-drum"></div>
     <div class="temple-colonnade">
         <div class="temple-col-shaft"></div>
         <div class="temple-inner">
