@@ -124,9 +124,48 @@ html, body, [class*="css"] { font-family: 'Lato', sans-serif; }
     margin: 0 auto; gap: 0;
 }
 .temple-col-shaft {
-    width: 10px; flex-shrink: 0;
-    background: linear-gradient(90deg, #b8883a0a, #b8883a22, #b8883a0a);
-    border-left: 1px solid #b8883a44; border-right: 1px solid #b8883a44;
+    width: 14px; flex-shrink: 0; position: relative; overflow: hidden;
+    /* Volumen cilíndrico */
+    background: linear-gradient(90deg,
+        rgba(26,18,9,0.85) 0%,
+        rgba(184,136,58,0.45) 28%,
+        rgba(232,213,163,0.35) 50%,
+        rgba(184,136,58,0.4) 72%,
+        rgba(26,18,9,0.85) 100%
+    );
+    border-radius: 2px;
+    border-left: 1px solid #b8883a55;
+    border-right: 1px solid #b8883a55;
+}
+/* Espiral helicoidal salomónica */
+.temple-col-shaft::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        -52deg,
+        transparent        0px,
+        transparent        5px,
+        rgba(26,18,9,0.55) 5px,
+        rgba(26,18,9,0.55) 8px,
+        transparent        8px,
+        transparent       14px
+    );
+}
+/* Reflejo de luz sobre la espiral */
+.temple-col-shaft::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        -52deg,
+        transparent              0px,
+        transparent              5px,
+        rgba(232,213,163,0.12)   5px,
+        rgba(232,213,163,0.12)   6px,
+        transparent              6px,
+        transparent             14px
+    );
 }
 .temple-inner {
     padding: 0.6rem 1.8rem 0.4rem; min-width: 160px;
