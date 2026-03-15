@@ -93,40 +93,130 @@ st.markdown("""
 
 html, body, [class*="css"] { font-family: 'Lato', sans-serif; }
 .temple-header { text-align: center; padding: 0.5rem 0 0.5rem; }
-.temple-pediment {
-    width: 0; height: 0;
-    border-left: 90px solid transparent;
-    border-right: 90px solid transparent;
-    border-bottom: 24px solid #b8883a33;
-    margin: 0 auto;
-    position: relative;
+.temple-dome-wrap {
+    position: relative; width: 180px; height: 72px; margin: 0 auto; overflow: hidden;
 }
-.temple-pediment::after {
+/* Cuerpo principal de la cúpula */
+.temple-dome {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 140px;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    /* Volumen esférico igual que las columnas */
+    background: linear-gradient(90deg,
+        rgba(26,18,9,0.9)       0%,
+        rgba(184,136,58,0.4)   22%,
+        rgba(232,213,163,0.28) 50%,
+        rgba(184,136,58,0.38)  78%,
+        rgba(26,18,9,0.9)     100%
+    );
+    border-left:  1px solid #b8883a55;
+    border-right: 1px solid #b8883a55;
+    border-top:   1px solid #b8883a77;
+    overflow: hidden;
+}
+/* Meridianos helicoidales — misma inclinación que la espiral salomónica */
+.temple-dome::before {
     content: '';
-    position: absolute;
-    left: -90px; top: 0;
-    width: 180px; height: 0;
-    border-bottom: 2px solid #b8883a66;
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+        -52deg,
+        transparent        0px,
+        transparent        8px,
+        rgba(26,18,9,0.5)  8px,
+        rgba(26,18,9,0.5) 12px,
+        transparent       12px,
+        transparent       22px
+    );
+    border-radius: inherit;
 }
-.temple-frieze {
-    display: flex; justify-content: center; align-items: stretch;
-    width: 180px; margin: 0 auto;
-    background: linear-gradient(180deg, #b8883a22, #b8883a08);
-    border-left: 1px solid #b8883a55; border-right: 1px solid #b8883a55;
-    padding: 4px 8px; gap: 6px;
+/* Reflejo de luz */
+.temple-dome::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+        -52deg,
+        transparent             0px,
+        transparent             8px,
+        rgba(232,213,163,0.1)   8px,
+        rgba(232,213,163,0.1)   9px,
+        transparent             9px,
+        transparent            22px
+    );
+    border-radius: inherit;
 }
-.temple-dentil {
-    width: 7px; height: 10px;
-    background: #b8883a55; border-radius: 1px 1px 0 0; flex-shrink: 0;
+/* Linterna en el vértice de la cúpula */
+.temple-lantern {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 18px; height: 14px;
+    background: linear-gradient(90deg,
+        rgba(26,18,9,0.8) 0%,
+        rgba(184,136,58,0.5) 50%,
+        rgba(26,18,9,0.8) 100%
+    );
+    border: 1px solid #b8883a77;
+    border-radius: 3px 3px 0 0;
+}
+/* Tambor en la base de la cúpula */
+.temple-drum {
+    height: 10px; width: 180px; margin: 0 auto;
+    background: linear-gradient(90deg,
+        rgba(26,18,9,0.85) 0%,
+        rgba(184,136,58,0.35) 30%,
+        rgba(232,213,163,0.2) 50%,
+        rgba(184,136,58,0.33) 70%,
+        rgba(26,18,9,0.85) 100%
+    );
+    border-left:  1px solid #b8883a55;
+    border-right: 1px solid #b8883a55;
+    border-bottom: 1px solid #b8883a44;
 }
 .temple-colonnade {
     display: flex; justify-content: center; align-items: stretch;
     margin: 0 auto; gap: 0;
 }
 .temple-col-shaft {
-    width: 10px; flex-shrink: 0;
-    background: linear-gradient(90deg, #b8883a0a, #b8883a22, #b8883a0a);
-    border-left: 1px solid #b8883a44; border-right: 1px solid #b8883a44;
+    width: 14px; flex-shrink: 0; position: relative; overflow: hidden;
+    /* Volumen cilíndrico */
+    background: linear-gradient(90deg,
+        rgba(26,18,9,0.85) 0%,
+        rgba(184,136,58,0.45) 28%,
+        rgba(232,213,163,0.35) 50%,
+        rgba(184,136,58,0.4) 72%,
+        rgba(26,18,9,0.85) 100%
+    );
+    border-radius: 2px;
+    border-left: 1px solid #b8883a55;
+    border-right: 1px solid #b8883a55;
+}
+/* Espiral helicoidal salomónica */
+.temple-col-shaft::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        -52deg,
+        transparent        0px,
+        transparent        5px,
+        rgba(26,18,9,0.55) 5px,
+        rgba(26,18,9,0.55) 8px,
+        transparent        8px,
+        transparent       14px
+    );
+}
+/* Reflejo de luz sobre la espiral */
+.temple-col-shaft::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        -52deg,
+        transparent              0px,
+        transparent              5px,
+        rgba(232,213,163,0.12)   5px,
+        rgba(232,213,163,0.12)   6px,
+        transparent              6px,
+        transparent             14px
+    );
 }
 .temple-inner {
     padding: 0.6rem 1.8rem 0.4rem; min-width: 160px;
@@ -188,7 +278,67 @@ html, body, [class*="css"] { font-family: 'Lato', sans-serif; }
     font-size: 0.85rem;
 }
 .maps-link a:hover { text-decoration: underline; }
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+
+/* Tablet (≤768px) — ajustes suaves */
+@media (max-width: 768px) {
+    .temple-title {
+        font-size: 1.7rem;
+        letter-spacing: 0.2em;
+    }
+    .temple-dome-wrap { width: 150px; height: 60px; }
+    .temple-drum      { width: 150px; }
+    .temple-step-1    { width: 150px; }
+    .temple-step-2    { width: 130px; }
+    .temple-step-3    { width: 110px; }
+    .temple-inner     { padding: 0.5rem 1.2rem 0.3rem; min-width: 120px; }
+    .metric-card .num   { font-size: 1.5rem; }
+    .metric-card .label { font-size: 0.68rem; }
+    .metric-card        { padding: 0.7rem 0.4rem; }
+}
+
+/* Móvil (≤480px) — rediseño más agresivo */
+@media (max-width: 480px) {
+    .temple-title {
+        font-size: 1.25rem;
+        letter-spacing: 0.12em;
+    }
+    .temple-subtitle  { font-size: 0.6rem; letter-spacing: 0.1em; }
+    .temple-ornament  { letter-spacing: 0.3em; }
+    .temple-dome-wrap { width: 120px; height: 48px; }
+    .temple-drum      { width: 120px; height: 8px; }
+    .temple-col-shaft { width: 10px; }
+    .temple-inner     { padding: 0.4rem 0.8rem 0.25rem; min-width: 90px; }
+    .temple-step-1    { width: 120px; }
+    .temple-step-2    { width: 100px; }
+    .temple-step-3    { width: 80px;  }
+    .temple-lantern   { width: 14px; height: 10px; }
+
+    /* Métricas: una fila compacta */
+    .metric-card        { padding: 0.5rem 0.2rem; border-radius: 7px; }
+    .metric-card .num   { font-size: 1.2rem; }
+    .metric-card .label { font-size: 0.6rem; letter-spacing: 0.05em; }
+
+    /* Fotos en 2 columnas en vez de 4 */
+    [data-testid="stImage"] img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    /* Texto de notas más pequeño */
+    .notas-texto { font-size: 0.85rem; }
+
+    /* Tabs más compactos */
+    .stTabs [data-baseweb="tab"] {
+        font-size: 0.7rem;
+        padding: 6px 8px !important;
+        letter-spacing: 0;
+    }
+}
 </style>
+<!-- Viewport meta: esencial para que los media queries funcionen en móvil -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 """, unsafe_allow_html=True)
 
 # ── Session state ─────────────────────────────────────────────────
@@ -230,16 +380,11 @@ templos = cargar()
 # ── Cabecera ──────────────────────────────────────────────────────
 st.markdown("""
 <div class="temple-header">
-    <div class="temple-pediment"></div>
-    <div class="temple-frieze">
-        <div class="temple-dentil"></div><div class="temple-dentil"></div>
-        <div class="temple-dentil"></div><div class="temple-dentil"></div>
-        <div class="temple-dentil"></div><div class="temple-dentil"></div>
-        <div class="temple-dentil"></div><div class="temple-dentil"></div>
-        <div class="temple-dentil"></div><div class="temple-dentil"></div>
-        <div class="temple-dentil"></div><div class="temple-dentil"></div>
-        <div class="temple-dentil"></div><div class="temple-dentil"></div>
+    <div class="temple-dome-wrap">
+        <div class="temple-lantern"></div>
+        <div class="temple-dome"></div>
     </div>
+    <div class="temple-drum"></div>
     <div class="temple-colonnade">
         <div class="temple-col-shaft"></div>
         <div class="temple-inner">
@@ -283,10 +428,12 @@ def mostrar_miniaturas(fotos, clave):
     fotos = urls_validas(fotos)
     if not fotos:
         return
-    cols = st.columns(min(len(fotos), 4))
+    # En móvil Streamlit ya reajusta, limitamos a 2 columnas máximo visualmente
+    n_cols = min(len(fotos), 4)
+    cols = st.columns(n_cols)
     for i, url in enumerate(fotos):
-        with cols[i % 4]:
-            st.image(url, width=140)
+        with cols[i % n_cols]:
+            st.image(url, use_container_width=True)
     if st.button(f"🖼️ Ver fotos ({len(fotos)})", key=f"lb_{clave}"):
         st.session_state.lightbox = fotos[0]
         st.session_state.lightbox_fotos = fotos
