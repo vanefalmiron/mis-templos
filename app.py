@@ -188,7 +188,43 @@ html, body, [class*="css"] { font-family: 'Lato', sans-serif; }
     font-size: 0.85rem;
 }
 .maps-link a:hover { text-decoration: underline; }
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+
+/* Tablet (≤768px) */
+@media (max-width: 768px) {
+    .temple-title       { font-size: 1.7rem; letter-spacing: 0.2em; }
+    .temple-inner       { padding: 0.5rem 1.2rem 0.3rem; min-width: 120px; }
+    .metric-card .num   { font-size: 1.5rem; }
+    .metric-card .label { font-size: 0.68rem; }
+    .metric-card        { padding: 0.7rem 0.4rem; }
+    .temple-step-1      { width: 150px; }
+    .temple-step-2      { width: 130px; }
+    .temple-step-3      { width: 110px; }
+}
+
+/* Móvil (≤480px) */
+@media (max-width: 480px) {
+    .temple-title    { font-size: clamp(0.9rem, 6vw, 1.2rem); letter-spacing: 0.06em; white-space: nowrap; }
+    .temple-subtitle { font-size: 0.55rem; letter-spacing: 0.06em; white-space: nowrap; }
+    .temple-ornament { letter-spacing: 0.2em; }
+    .temple-inner    { padding: 0.4rem 0.6rem 0.25rem; min-width: 0; }
+    .temple-frieze   { width: 120px; padding: 3px 4px; gap: 3px; }
+    .temple-dentil   { width: 5px; height: 8px; }
+    .temple-pediment { border-left-width: 60px; border-right-width: 60px; border-bottom-width: 18px; }
+    .temple-step-1   { width: 120px; }
+    .temple-step-2   { width: 100px; }
+    .temple-step-3   { width: 80px;  }
+    .metric-card        { padding: 0.5rem 0.2rem; border-radius: 7px; }
+    .metric-card .num   { font-size: 1.2rem; }
+    .metric-card .label { font-size: 0.6rem; letter-spacing: 0.05em; }
+    [data-testid="stImage"] img { max-width: 100% !important; height: auto !important; }
+    .notas-texto { font-size: 0.85rem; }
+    .stTabs [data-baseweb="tab"] { font-size: 0.7rem; padding: 6px 8px !important; letter-spacing: 0; }
+}
 </style>
+<!-- Viewport meta: esencial para que los media queries funcionen en móvil -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 """, unsafe_allow_html=True)
 
 # ── Session state ─────────────────────────────────────────────────
@@ -283,10 +319,11 @@ def mostrar_miniaturas(fotos, clave):
     fotos = urls_validas(fotos)
     if not fotos:
         return
-    cols = st.columns(min(len(fotos), 4))
+    n_cols = min(len(fotos), 4)
+    cols = st.columns(n_cols)
     for i, url in enumerate(fotos):
-        with cols[i % 4]:
-            st.image(url, width=140)
+        with cols[i % n_cols]:
+            st.image(url, use_container_width=True)
     if st.button(f"🖼️ Ver fotos ({len(fotos)})", key=f"lb_{clave}"):
         st.session_state.lightbox = fotos[0]
         st.session_state.lightbox_fotos = fotos
