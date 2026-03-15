@@ -86,7 +86,7 @@ def toggle_fav(ig):
     db.table("templos").update({"favorita": not ig["favorita"]}).eq("id", ig["id"]).execute()
 
 # ── Estilos ───────────────────────────────────────────────────────
-st.set_page_config(page_title="Mis Templos", page_icon="⛪", layout="centered")
+st.set_page_config(page_title="Mis Templos", page_icon="⛪", layout="centered", initial_sidebar_state="collapsed")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&display=swap');
