@@ -301,16 +301,15 @@ html, body, [class*="css"] { font-family: 'Lato', sans-serif; }
 /* Móvil (≤480px) — rediseño más agresivo */
 @media (max-width: 480px) {
     .temple-title {
-        font-size: clamp(0.9rem, 6vw, 1.2rem);
-        letter-spacing: 0.06em;
-        white-space: nowrap;
+        font-size: 1.25rem;
+        letter-spacing: 0.12em;
     }
-    .temple-subtitle  { font-size: 0.55rem; letter-spacing: 0.06em; white-space: nowrap; }
-    .temple-ornament  { letter-spacing: 0.2em; }
+    .temple-subtitle  { font-size: 0.6rem; letter-spacing: 0.1em; }
+    .temple-ornament  { letter-spacing: 0.3em; }
     .temple-dome-wrap { width: 120px; height: 48px; }
     .temple-drum      { width: 120px; height: 8px; }
     .temple-col-shaft { width: 10px; }
-    .temple-inner     { padding: 0.4rem 0.6rem 0.25rem; min-width: 0; }
+    .temple-inner     { padding: 0.4rem 0.8rem 0.25rem; min-width: 90px; }
     .temple-step-1    { width: 120px; }
     .temple-step-2    { width: 100px; }
     .temple-step-3    { width: 80px;  }
