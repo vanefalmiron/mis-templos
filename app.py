@@ -446,35 +446,40 @@ with tab_lista:
             st.rerun()
 
 # ════════════════════════════════════════════════════
-# TAB AÑADIR (solo admin)
-# ════════════════════════════════════════════════════
-# ════════════════════════════════════════════════════
 # TAB MAPA
 # ════════════════════════════════════════════════════
 with tab_mapa:
-    con_coords = [t for t in templos if t.get("lat") and t.get("lon")]
-    sin_coords  = [t for t in templos if not t.get("lat") or not t.get("lon")]
+    templos_mapa = cargar()  # recarga fresca para el mapa
+    con_coords = [t for t in templos_mapa if t.get("lat") and t.get("lon")]
+    sin_coords  = [t for t in templos_mapa if not t.get("lat") or not t.get("lon")]
 
     # Botón admin para geocodificar todos los que faltan
     if st.session_state.admin and sin_coords:
-        st.warning(f"{len(sin_coords)} templo(s) sin coordenadas.")
+        st.warning(f"{len(sin_coords)} templo(s) sin coordenadas en el mapa.")
         if st.button("📍 Geocodificar todos", type="primary"):
+            resultados = []
             progreso = st.progress(0, text="Geocodificando...")
             ok, fallo = 0, 0
             for i, t in enumerate(sin_coords):
+                query = ", ".join(filter(None, [t.get("direccion"), t.get("ciudad"), t.get("pais")]))
                 lat, lon = geocodificar(t.get("direccion"), t.get("ciudad"), t.get("pais"))
                 if lat and lon:
                     db.table("templos").update({"lat": lat, "lon": lon}).eq("id", t["id"]).execute()
+                    resultados.append(f"✅ {t.get('nombre','')} → {lat:.4f}, {lon:.4f}")
                     ok += 1
                 else:
+                    resultados.append(f"❌ {t.get('nombre','')} — no encontrado (query: {query})")
                     fallo += 1
                 progreso.progress((i + 1) / len(sin_coords), text=f"Procesando {t.get('nombre','')}")
             progreso.empty()
-            st.success(f"✅ {ok} geocodificados correctamente.{f' ⚠️ {fallo} sin resultado (dirección no encontrada).' if fallo else ''}")
-            st.rerun()
+            for r in resultados:
+                st.write(r)
+            st.success(f"✅ {ok} geocodificados.{f' ⚠️ {fallo} fallaron.' if fallo else ''}")
+            if ok > 0:
+                st.rerun()
 
     if not con_coords:
-        st.info("Aún no hay templos con ubicación. Al añadir o editar un templo con dirección, el pin aparecerá aquí automáticamente.")
+        st.info("Aún no hay templos con ubicación. Pulsa el botón de arriba para geocodificar los existentes.")
     else:
         m = folium.Map(
             location=[con_coords[0]["lat"], con_coords[0]["lon"]],
@@ -485,14 +490,14 @@ with tab_mapa:
             fotos = urls_validas(t.get("fotos_urls"))
             img_html = f'<img src="{fotos[0]}" width="160" style="border-radius:6px;margin-bottom:6px;"><br>' if fotos else ""
             fav = "⭐ " if t.get("favorita") else ""
-            popup_html = f"""
-            <div style="font-family:serif;min-width:180px">
-                {img_html}
-                <b style="font-size:1rem">{fav}{html_lib.escape(t.get('nombre',''))}</b><br>
-                <span style="color:#888;font-size:0.8rem">{html_lib.escape(t.get('ciudad',''))}, {html_lib.escape(t.get('pais',''))}</span><br>
-                <span style="font-size:0.75rem">{html_lib.escape(t.get('categoria',''))}</span>
-            </div>
-            """
+            popup_html = (
+                f'<div style="font-family:serif;min-width:180px">' +
+                img_html +
+                f'<b style="font-size:1rem">{fav}{html_lib.escape(t.get("nombre",""))}</b><br>' +
+                f'<span style="color:#888;font-size:0.8rem">{html_lib.escape(t.get("ciudad",""))}, {html_lib.escape(t.get("pais",""))}</span><br>' +
+                f'<span style="font-size:0.75rem">{html_lib.escape(t.get("categoria",""))}</span>' +
+                '</div>'
+            )
             folium.Marker(
                 location=[t["lat"], t["lon"]],
                 popup=folium.Popup(popup_html, max_width=200),
