@@ -7,7 +7,8 @@ from supabase import create_client
 from streamlit_folium import st_folium
 import folium
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
+from geopy.exc import GeocoderTimedOut, GeocoderRateLimited
+import time
 
 # ── Conexión a Supabase ───────────────────────────────────────────
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
@@ -59,11 +60,18 @@ def geocodificar(direccion, ciudad, pais):
     query = ", ".join(filter(None, [direccion, ciudad, pais]))
     try:
         geolocator = Nominatim(user_agent="mis_templos_app")
-        location = geolocator.geocode(query, timeout=5)
+        time.sleep(1.1)  # Nominatim permite máx 1 req/seg
+        location = geolocator.geocode(query, timeout=10)
         if location:
             return location.latitude, location.longitude
-    except GeocoderTimedOut:
-        pass
+    except (GeocoderTimedOut, GeocoderRateLimited):
+        time.sleep(3)
+        try:
+            location = geolocator.geocode(query, timeout=10)
+            if location:
+                return location.latitude, location.longitude
+        except Exception:
+            pass
     return None, None
 
 # ── CRUD Supabase ─────────────────────────────────────────────────
