@@ -4,6 +4,10 @@ import os, io, uuid, html as html_lib
 from urllib.parse import quote
 from PIL import Image, ImageOps
 from supabase import create_client
+from streamlit_folium import st_folium
+import folium
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
 
 # ── Conexión a Supabase ───────────────────────────────────────────
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
@@ -48,12 +52,27 @@ def urls_validas(lista):
 def maps_url(direccion):
     return f"https://www.google.com/maps/search/?api=1&query={quote(direccion)}"
 
+def geocodificar(direccion, ciudad, pais):
+    """Devuelve (lat, lon) o (None, None) si falla."""
+    if not any([direccion, ciudad, pais]):
+        return None, None
+    query = ", ".join(filter(None, [direccion, ciudad, pais]))
+    try:
+        geolocator = Nominatim(user_agent="mis_templos_app")
+        location = geolocator.geocode(query, timeout=5)
+        if location:
+            return location.latitude, location.longitude
+    except GeocoderTimedOut:
+        pass
+    return None, None
+
 # ── CRUD Supabase ─────────────────────────────────────────────────
 def cargar():
     res = db.table("templos").select("*").order("fecha", desc=True).execute()
     return res.data or []
 
 def guardar_nuevo(ig, fotos_urls):
+    lat, lon = geocodificar(ig.get("direccion"), ig.get("ciudad"), ig.get("pais"))
     db.table("templos").insert({
         "nombre":     ig["nombre"],
         "ciudad":     ig["ciudad"],
@@ -64,9 +83,12 @@ def guardar_nuevo(ig, fotos_urls):
         "notas":      ig["notas"],
         "favorita":   ig["favorita"],
         "fotos_urls": fotos_urls,
+        "lat":        lat,
+        "lon":        lon,
     }).execute()
 
 def actualizar(ig, fotos_urls):
+    lat, lon = geocodificar(ig.get("direccion"), ig.get("ciudad"), ig.get("pais"))
     db.table("templos").update({
         "nombre":     ig["nombre"],
         "ciudad":     ig["ciudad"],
@@ -77,6 +99,8 @@ def actualizar(ig, fotos_urls):
         "notas":      ig["notas"],
         "favorita":   ig["favorita"],
         "fotos_urls": fotos_urls,
+        "lat":        lat,
+        "lon":        lon,
     }).eq("id", ig["id"]).execute()
 
 def eliminar(ig_id):
@@ -86,7 +110,7 @@ def toggle_fav(ig):
     db.table("templos").update({"favorita": not ig["favorita"]}).eq("id", ig["id"]).execute()
 
 # ── Estilos ───────────────────────────────────────────────────────
-st.set_page_config(page_title="Mis Templos", page_icon="⛪", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Mis Templos", page_icon="⛪", layout="centered")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&display=swap');
@@ -332,9 +356,9 @@ def mostrar_miniaturas(fotos, clave):
 
 # ── Tabs — solo admin ve Añadir y Editar ──────────────────────────
 if st.session_state.admin:
-    tab_lista, tab_nueva, tab_editar = st.tabs(["📋 Mi lista", "➕ Añadir", "✏️ Editar"])
+    tab_lista, tab_mapa, tab_nueva, tab_editar = st.tabs(["📋 Mi lista", "🗺️ Mapa", "➕ Añadir", "✏️ Editar"])
 else:
-    tab_lista, = st.tabs(["📋 Mi lista"])
+    tab_lista, tab_mapa = st.tabs(["📋 Mi lista", "🗺️ Mapa"])
 
 # ════════════════════════════════════════════════════
 # TAB LISTA
@@ -416,6 +440,45 @@ with tab_lista:
 # ════════════════════════════════════════════════════
 # TAB AÑADIR (solo admin)
 # ════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════
+# TAB MAPA
+# ════════════════════════════════════════════════════
+with tab_mapa:
+    con_coords = [t for t in templos if t.get("lat") and t.get("lon")]
+    sin_coords  = [t for t in templos if not t.get("lat") or not t.get("lon")]
+
+    if not con_coords:
+        st.info("Aún no hay templos con ubicación. Al añadir o editar un templo con dirección, el pin aparecerá aquí automáticamente.")
+    else:
+        m = folium.Map(
+            location=[con_coords[0]["lat"], con_coords[0]["lon"]],
+            zoom_start=5,
+            tiles="CartoDB dark_matter",
+        )
+        for t in con_coords:
+            fotos = urls_validas(t.get("fotos_urls"))
+            img_html = f'<img src="{fotos[0]}" width="160" style="border-radius:6px;margin-bottom:6px;"><br>' if fotos else ""
+            fav = "⭐ " if t.get("favorita") else ""
+            popup_html = f"""
+            <div style="font-family:serif;min-width:180px">
+                {img_html}
+                <b style="font-size:1rem">{fav}{html_lib.escape(t.get('nombre',''))}</b><br>
+                <span style="color:#888;font-size:0.8rem">{html_lib.escape(t.get('ciudad',''))}, {html_lib.escape(t.get('pais',''))}</span><br>
+                <span style="font-size:0.75rem">{html_lib.escape(t.get('categoria',''))}</span>
+            </div>
+            """
+            folium.Marker(
+                location=[t["lat"], t["lon"]],
+                popup=folium.Popup(popup_html, max_width=200),
+                tooltip=t.get("nombre", ""),
+                icon=folium.Icon(color="orange", icon="place-of-worship", prefix="fa"),
+            ).add_to(m)
+
+        st_folium(m, use_container_width=True, height=500)
+
+        if sin_coords:
+            st.caption(f"⚠️ {len(sin_coords)} templo(s) sin coordenadas — éditalos para que aparezcan en el mapa.")
+
 if st.session_state.admin:
     with tab_nueva:
         st.subheader("Nueva visita")
