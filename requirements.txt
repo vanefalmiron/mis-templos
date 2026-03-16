@@ -1,3 +1,5 @@
 streamlit
 pillow
 supabase
+streamlit-folium
+geopy
