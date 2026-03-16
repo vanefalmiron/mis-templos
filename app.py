@@ -447,6 +447,24 @@ with tab_mapa:
     con_coords = [t for t in templos if t.get("lat") and t.get("lon")]
     sin_coords  = [t for t in templos if not t.get("lat") or not t.get("lon")]
 
+    # Botón admin para geocodificar todos los que faltan
+    if st.session_state.admin and sin_coords:
+        st.warning(f"{len(sin_coords)} templo(s) sin coordenadas.")
+        if st.button("📍 Geocodificar todos", type="primary"):
+            progreso = st.progress(0, text="Geocodificando...")
+            ok, fallo = 0, 0
+            for i, t in enumerate(sin_coords):
+                lat, lon = geocodificar(t.get("direccion"), t.get("ciudad"), t.get("pais"))
+                if lat and lon:
+                    db.table("templos").update({"lat": lat, "lon": lon}).eq("id", t["id"]).execute()
+                    ok += 1
+                else:
+                    fallo += 1
+                progreso.progress((i + 1) / len(sin_coords), text=f"Procesando {t.get('nombre','')}")
+            progreso.empty()
+            st.success(f"✅ {ok} geocodificados correctamente.{f' ⚠️ {fallo} sin resultado (dirección no encontrada).' if fallo else ''}")
+            st.rerun()
+
     if not con_coords:
         st.info("Aún no hay templos con ubicación. Al añadir o editar un templo con dirección, el pin aparecerá aquí automáticamente.")
     else:
