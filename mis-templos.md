@@ -1,4 +1,4 @@
-Basílica Santa Maria in Trastevere
+**Basílica Santa Maria in Trastevere**
 Piazza di Santa Maria in Trastevere, 00153 Roma RM, Italia
 
 7 datos curiosos:
@@ -31,7 +31,7 @@ Frente a la basílica está la fuente de la Piazza di Santa Maria in Trastevere,
 
 La basílica y su plaza se iluminan al anochecer, creando uno de los ambientes más románticos y animados del barrio de Trastevere.
 
-Chiesa di Sant' Ignazio di Loyola
+**Chiesa di Sant' Ignazio di Loyola**
 Piazza Sant'Ignazio, 00186 Roma RM, Italia
 
 7 datos curiosos:
@@ -64,7 +64,7 @@ Andrea Pozzo era también arquitecto y experto en perspectiva. Su obra en esta i
 
 La iglesia honra a Ignacio de Loyola, fundador de la Society of Jesus, una de las órdenes religiosas más influyentes en la educación y misiones católicas.
 
- Basilica di Santa Maria Maggiore
+ **Basilica di Santa Maria Maggiore**
 P.za di Santa Maria Maggiore, 00100 Roma RM, Italia
 
 7 datos curiosos:
@@ -96,3 +96,69 @@ La basílica alberga tumbas de varios papas, incluido Pío V, conocido por impul
 🎬 Aparece en cine y cultura popular
 
 La basílica ha aparecido en documentales y producciones sobre Roma y el Vaticano, y es uno de los templos más visitados por peregrinos y turistas del mundo.
+
+ **Santa Maria della Concezione dei Cappuccini**
+ Via Vittorio Veneto, 27, 00187 Roma RM, Italia
+
+ 7 datos curiosos:
+
+ ☁️ Construcción especial
+
+Fue construida entre 1626 y 1631 por encargo del papa Urbano VIII en honor a su hermano el cardenal Antonio Barberini, que era fraile capuchino.
+
+☦️ Sencillez interior
+
+A diferencia de muchas iglesias romanas que son ricas en mármoles y oro, su interior es austero y sencillo, fiel a la espiritualidad humilde de los franciscanos capuchinos.
+
+💀 Cripta macabra pero espiritual
+
+Bajo la iglesia hay un osario muy especial: seis capillas decoradas con los huesos de unos 3 700‑4 000 frailes capuchinos, organizado en patrones artísticos.
+
+🔡 Inscripción meditativa
+
+En la entrada de la cripta se lee una frase que invita a reflexionar: “Lo que eres tú, nosotros lo fuimos; lo que somos nosotros, tú lo serás.” Es un poderoso memento mori.
+
+🦴 Chapitas temáticas
+
+Cada sala de la cripta tiene un tema basado en tipos de huesos (como cráneos, fémures, pelvis), y los huesos no solo cubren paredes… ¡también forman candelabros y decoraciones complejas!
+
+📜 Espacio de reflexión, no de miedo
+
+Aunque puede parecer macabro, los capuchinos lo concibieron como un lugar para meditar sobre la fragilidad de la vida y la eternidad del alma, no como una atracción terrorífica.
+
+📚 Atrajo a escritores famosos
+
+Esta cripta llamó la atención de viajeros y autores históricos como Mark Twain (quien escribió sobre ella en Innocents Abroad) y otras figuras del siglo XIX por su fuerte simbolismo.
+
+**Iglesia Parroquial de San Nicolás de Bari y San Pedro Mártir**
+C/ dels Cavallers, 35, Ciutat Vella, 46001 València, Valencia
+
+7 datos curiosos:
+
+🎨 La llaman la “Capilla Sixtina valenciana”
+
+Su impresionante techo está cubierto por grandes frescos barrocos que han hecho que muchos la comparen con la Capilla Sixtina por su belleza artística.
+
+⛪ Es una de las primeras parroquias cristianas de Valencia
+
+Fue fundada poco después de la reconquista de la ciudad en 1238 y se convirtió en una de las primeras parroquias de la nueva Valencia cristiana.
+
+🏰 Mezcla dos estilos muy diferentes
+
+El edificio tiene estructura gótica del siglo XV, pero su interior está decorado con un espectacular estilo barroco del siglo XVII, algo poco común en una misma iglesia.
+
+🖌️ Sus frescos cuentan historias de dos santos
+
+Las pinturas del techo muestran escenas de la vida de San Nicolás de Bari y San Pedro Mártir, diseñadas por Antonio Palomino y pintadas por Dionís Vidal.
+
+🧱 Tiene más de 2000 m² de pinturas en su bóveda
+
+El techo de la iglesia está cubierto por un enorme programa pictórico que recorre toda la nave y relata múltiples escenas religiosas.
+
+🔧 Su restauración fue una de las más importantes del mundo reciente
+
+Una gran restauración reveló y recuperó miles de metros de frescos barrocos, devolviendo el esplendor original del templo.
+
+🙏 Cada lunes llegan muchos devotos por una tradición especial
+
+Ese día cientos de personas visitan la iglesia para la devoción a San Judas Tadeo, conocido como el santo de las causas imposibles.
