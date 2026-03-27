@@ -159,6 +159,39 @@ El techo de la iglesia está cubierto por un enorme programa pictórico que reco
 
 Una gran restauración reveló y recuperó miles de metros de frescos barrocos, devolviendo el esplendor original del templo.
 
+**Sainte Chapelle**
+ 10 Bd du Palais, 75001 Paris, Francia
+ 
+7 datos curiosos:
+
+🏰 Fue construida en tiempo récord
+
+Se terminó en apenas unos 7 años (1241–1248), algo impresionante para la época medieval.
+
+👑 Era una capilla real privada
+
+Fue mandada construir por el rey Luis IX de Francia para su uso personal y el de la corte.
+
+💎 Guardaba reliquias sagradas
+
+Su propósito principal era albergar reliquias como la supuesta Corona de Espinas de Cristo.
+
+🌈 Tiene más de 1.100 escenas en vitrales
+
+Sus vidrieras narran historias bíblicas como si fueran un enorme “cómic” medieval.
+
+🔺 Casi no tiene muros sólidos
+
+La estructura está diseñada para dar protagonismo al vidrio, con paredes prácticamente sustituidas por vitrales.
+
+🔥 Sobrevivió a la Revolución Francesa
+
+Durante la Revolución Francesa, fue dañada y utilizada con otros fines, pero logró conservarse.
+
+🎨 Es una joya del gótico radiante
+
+Es uno de los mejores ejemplos del estilo gótico “radiante”, que enfatiza la luz y la verticalidad.
+
 🙏 Cada lunes llegan muchos devotos por una tradición especial
 
 Ese día cientos de personas visitan la iglesia para la devoción a San Judas Tadeo, conocido como el santo de las causas imposibles.
