@@ -3,4 +3,5 @@ pillow
 supabase
 streamlit-folium
 geopy
+pandas
 numpy
