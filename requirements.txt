@@ -3,3 +3,4 @@ pillow
 supabase
 streamlit-folium
 geopy
+numpy
