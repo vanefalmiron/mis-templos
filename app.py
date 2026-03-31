@@ -30,6 +30,7 @@ CATEGORIAS = [
 ]
 
 ESTILOS = [
+    "Arquitectura de la Antigua Roma", "Arquitectura Medieval",
     "Románico", "Gótico", "Barroco", "Renacentista",
     "Mudéjar", "Neoclásico", "Bizantino",
     "Islámico", "Moderno / Contemporáneo",
