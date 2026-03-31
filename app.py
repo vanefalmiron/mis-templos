@@ -635,7 +635,7 @@ if st.session_state.admin:
             pais_e      = st.text_input("País",        value=t_edit.get("pais",""),            key=f"e_pais_{tid}")
             direccion_e = st.text_input("Dirección",   value=t_edit.get("direccion","") or "", key=f"e_direccion_{tid}")
             cat_e       = st.selectbox("Categoría", CATEGORIAS, index=cat_idx,                 key=f"e_cat_{tid}")
-            fecha_e     = st.number_input("📅 Año de construcción", min_value=0, max_value=2025, value=fecha_val, step=1, key=f"e_fecha_{tid}")
+            fecha_e     = st.number_input("📅 Año de construcción", min_value=0, max_value=2030, value=min(fecha_val, 2030), step=1, key=f"e_fecha_{tid}")
             notas_e     = st.text_area("Notas", height=180,
                                        value=t_edit.get("notas","") or "",                     key=f"e_notas_{tid}")
             estilos_e   = st.multiselect("🏛️ Estilo arquitectónico", ESTILOS,
