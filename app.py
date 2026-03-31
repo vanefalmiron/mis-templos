@@ -411,7 +411,7 @@ with tab_lista:
                     fav = "⭐" if t.get("favorita") else "☆"
                     st.subheader(f"{fav} {t.get('nombre','')}")
                     estilos_str = ("  |  🏛️ " + " · ".join(t["estilos"])) if t.get("estilos") else ""
-                    anio = str(t.get("fecha",""))[:4] if t.get("fecha") else ""
+                    anio = str(t.get("fecha","")) if t.get("fecha") else ""
                     st.caption(
                         f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
                         f"🏷️ {t.get('categoria','')}"
