@@ -32,7 +32,7 @@ CATEGORIAS = [
 ESTILOS = [
     "Antigua Roma", "Medieval",
     "Románico", "Gótico", "Gótico radiante", "Barroco", "Renacentista",
-    "Mudéjar", "Neoclásico", "Bizantino",
+    "Mudéjar", "Neoclásico", "Bizantino", "Hispanorromanos",
     "Islámico", "Moderno / Contemporáneo",
 ]
 
