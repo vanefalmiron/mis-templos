@@ -410,13 +410,14 @@ with tab_lista:
                 with col_info:
                     fav = "⭐" if t.get("favorita") else "☆"
                     st.subheader(f"{fav} {t.get('nombre','')}")
+                    estilos_str = ("  |  🏛️ " + " · ".join(t["estilos"])) if t.get("estilos") else ""
+                    anio = str(t.get("fecha",""))[:4] if t.get("fecha") else ""
                     st.caption(
                         f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
-                        f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
+                        f"🏷️ {t.get('categoria','')}"
+                        f"{estilos_str}"
+                        f"{'  |  📅 ' + anio if anio else ''}"
                     )
-                    if t.get("estilos"):
-                        estilos_str = " · ".join(t["estilos"])
-                        st.markdown(f"🏛️ _{estilos_str}_")
                     if t.get("direccion"):
                         dir_escaped = html_lib.escape(t["direccion"])
                         url = maps_url(t["direccion"])
