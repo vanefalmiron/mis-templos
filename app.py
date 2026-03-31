@@ -98,6 +98,7 @@ def guardar_nuevo(ig, fotos_urls):
         "fotos_urls": fotos_urls,
         "lat":        lat,
         "lon":        lon,
+        "estilos":    ig.get("estilos", []),
     }).execute()
 
 def actualizar(ig, fotos_urls):
@@ -114,6 +115,7 @@ def actualizar(ig, fotos_urls):
         "fotos_urls": fotos_urls,
         "lat":        lat,
         "lon":        lon,
+        "estilos":    ig.get("estilos", []),
     }).eq("id", ig["id"]).execute()
 
 def eliminar(ig_id):
@@ -406,6 +408,9 @@ with tab_lista:
                         f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
                         f"🏷️ {t.get('categoria','')}  |  📅 {t.get('fecha','')}"
                     )
+                    if t.get("estilos"):
+                        estilos_str = " · ".join(t["estilos"])
+                        st.markdown(f"🏛️ _{estilos_str}_")
                     if t.get("direccion"):
                         dir_escaped = html_lib.escape(t["direccion"])
                         url = maps_url(t["direccion"])
@@ -542,6 +547,7 @@ if st.session_state.admin:
         cat       = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
         fecha     = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
         notas     = st.text_area("Notas personales", placeholder="Tus impresiones...", height=180, key="n_notas")
+        estilos   = st.multiselect("🏛️ Estilo arquitectónico", ESTILOS, key="n_estilos")
         fav       = st.checkbox("⭐ Marcar como favorita", key="n_fav")
 
         if st.button("💾 Guardar", type="primary", use_container_width=True, key="btn_nueva"):
@@ -559,7 +565,7 @@ if st.session_state.admin:
                 guardar_nuevo({
                     "nombre": nombre, "ciudad": ciudad, "pais": pais,
                     "direccion": direccion, "categoria": cat, "fecha": str(fecha),
-                    "notas": notas, "favorita": fav,
+                    "notas": notas, "favorita": fav, "estilos": estilos,
                 }, urls)
                 st.success(f"✅ '{nombre}' guardado correctamente.")
                 st.balloons()
@@ -625,6 +631,9 @@ if st.session_state.admin:
             fecha_e     = st.date_input("Fecha",       value=fecha_val,                        key=f"e_fecha_{tid}")
             notas_e     = st.text_area("Notas", height=180,
                                        value=t_edit.get("notas","") or "",                     key=f"e_notas_{tid}")
+            estilos_e   = st.multiselect("🏛️ Estilo arquitectónico", ESTILOS,
+                                        default=[s for s in (t_edit.get("estilos") or []) if s in ESTILOS],
+                                        key=f"e_estilos_{tid}")
             fav_e       = st.checkbox("⭐ Favorita",   value=t_edit.get("favorita", False),    key=f"e_fav_{tid}")
 
             if st.button("💾 Guardar cambios", type="primary", use_container_width=True, key="btn_editar"):
@@ -644,7 +653,7 @@ if st.session_state.admin:
                         "id": t_edit["id"],
                         "nombre": nombre_e, "ciudad": ciudad_e, "pais": pais_e,
                         "direccion": direccion_e, "categoria": cat_e, "fecha": str(fecha_e),
-                        "notas": notas_e, "favorita": fav_e,
+                        "notas": notas_e, "favorita": fav_e, "estilos": estilos_e,
                     }, fotos_final)
                     st.success(f"✅ '{nombre_e}' actualizado correctamente.")
                     st.rerun()
