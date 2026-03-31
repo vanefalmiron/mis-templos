@@ -416,7 +416,7 @@ with tab_lista:
                         f"📍 {t.get('ciudad','')}, {t.get('pais','')}  |  "
                         f"🏷️ {t.get('categoria','')}"
                         f"{estilos_str}"
-                        f"{'  |  📅 ' + anio if anio else ''}"
+                        f"{'  |  🏗️ ' + anio if anio else ''}"
                     )
                     if t.get("direccion"):
                         dir_escaped = html_lib.escape(t["direccion"])
@@ -552,7 +552,7 @@ if st.session_state.admin:
         pais      = st.text_input("País", placeholder="Ej: España", key="n_pais")
         direccion = st.text_input("Dirección", placeholder="Ej: Pl. de la Catedral, s/n, Burgos", key="n_direccion")
         cat       = st.selectbox("Categoría", CATEGORIAS, key="n_cat")
-        fecha     = st.date_input("Fecha de visita", value=date.today(), key="n_fecha")
+        fecha     = st.number_input("📅 Año de construcción", min_value=0, max_value=2025, value=1500, step=1, key="n_fecha")
         notas     = st.text_area("Notas personales", placeholder="Tus impresiones...", height=180, key="n_notas")
         estilos   = st.multiselect("🏛️ Estilo arquitectónico", ESTILOS, key="n_estilos")
         fav       = st.checkbox("⭐ Marcar como favorita", key="n_fav")
@@ -571,7 +571,7 @@ if st.session_state.admin:
                             st.warning(f"No se pudo subir una foto: {e}")
                 guardar_nuevo({
                     "nombre": nombre, "ciudad": ciudad, "pais": pais,
-                    "direccion": direccion, "categoria": cat, "fecha": str(fecha),
+                    "direccion": direccion, "categoria": cat, "fecha": str(int(fecha)),
                     "notas": notas, "favorita": fav, "estilos": estilos,
                 }, urls)
                 st.success(f"✅ '{nombre}' guardado correctamente.")
@@ -626,16 +626,16 @@ if st.session_state.admin:
             tid = t_edit["id"]
             cat_idx = CATEGORIAS.index(t_edit["categoria"]) if t_edit.get("categoria") in CATEGORIAS else 0
             try:
-                fecha_val = date.fromisoformat(t_edit.get("fecha", str(date.today())))
+                fecha_val = int(str(t_edit.get("fecha", "1500"))[:4])
             except:
-                fecha_val = date.today()
+                fecha_val = 1500
 
             nombre_e    = st.text_input("Nombre *",    value=t_edit.get("nombre",""),         key=f"e_nombre_{tid}")
             ciudad_e    = st.text_input("Ciudad",      value=t_edit.get("ciudad",""),          key=f"e_ciudad_{tid}")
             pais_e      = st.text_input("País",        value=t_edit.get("pais",""),            key=f"e_pais_{tid}")
             direccion_e = st.text_input("Dirección",   value=t_edit.get("direccion","") or "", key=f"e_direccion_{tid}")
             cat_e       = st.selectbox("Categoría", CATEGORIAS, index=cat_idx,                 key=f"e_cat_{tid}")
-            fecha_e     = st.date_input("Fecha",       value=fecha_val,                        key=f"e_fecha_{tid}")
+            fecha_e     = st.number_input("📅 Año de construcción", min_value=0, max_value=2025, value=fecha_val, step=1, key=f"e_fecha_{tid}")
             notas_e     = st.text_area("Notas", height=180,
                                        value=t_edit.get("notas","") or "",                     key=f"e_notas_{tid}")
             estilos_e   = st.multiselect("🏛️ Estilo arquitectónico", ESTILOS,
@@ -659,7 +659,7 @@ if st.session_state.admin:
                     actualizar({
                         "id": t_edit["id"],
                         "nombre": nombre_e, "ciudad": ciudad_e, "pais": pais_e,
-                        "direccion": direccion_e, "categoria": cat_e, "fecha": str(fecha_e),
+                        "direccion": direccion_e, "categoria": cat_e, "fecha": str(int(fecha_e)),
                         "notas": notas_e, "favorita": fav_e, "estilos": estilos_e,
                     }, fotos_final)
                     st.success(f"✅ '{nombre_e}' actualizado correctamente.")
