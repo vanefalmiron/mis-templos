@@ -29,6 +29,12 @@ CATEGORIAS = [
     "Santuario", "Otro",
 ]
 
+ESTILOS = [
+    "Románico", "Gótico", "Barroco", "Renacentista",
+    "Mudéjar", "Neoclásico", "Bizantino",
+    "Islámico", "Moderno / Contemporáneo",
+]
+
 # ── Utilidades de imagen ──────────────────────────────────────────
 def corregir_orientacion(imagen_bytes):
     img = Image.open(io.BytesIO(imagen_bytes))
