@@ -88,8 +88,16 @@ def geocodificar(direccion, ciudad, pais):
 
 # ── CRUD Supabase ─────────────────────────────────────────────────
 def cargar():
-    res = db.table("templos").select("*").order("fecha", desc=True).execute()
-    return res.data or []
+    import time
+    for intento in range(3):
+        try:
+            res = db.table("templos").select("*").order("fecha", desc=True).execute()
+            return res.data or []
+        except Exception:
+            if intento < 2:
+                time.sleep(2)
+    st.error("No se pudo conectar a la base de datos. Recarga la página.")
+    st.stop()
 
 def guardar_nuevo(ig, fotos_urls):
     lat, lon = geocodificar(ig.get("direccion"), ig.get("ciudad"), ig.get("pais"))
