@@ -15,6 +15,16 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 
+import base64, json
+def _rol(k):
+    try:
+        p = k.split(".")[1]
+        p += "=" * (-len(p) % 4)
+        return json.loads(base64.urlsafe_b64decode(p))["role"]
+    except Exception:
+        return "desconocido"
+st.sidebar.caption(f"DEBUG rol de la clave: {_rol(SUPABASE_KEY)}")
+
 @st.cache_resource
 def get_client():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
