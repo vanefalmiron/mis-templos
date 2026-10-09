@@ -89,14 +89,17 @@ def geocodificar(direccion, ciudad, pais):
 # ── CRUD Supabase ─────────────────────────────────────────────────
 def cargar():
     import time
+    ultimo_error = None
     for intento in range(3):
         try:
             res = db.table("templos").select("*").order("fecha", desc=True).execute()
             return res.data or []
-        except Exception:
+        except Exception as e:
+            ultimo_error = e
             if intento < 2:
                 time.sleep(2)
     st.error("No se pudo conectar a la base de datos. Recarga la página.")
+    st.exception(ultimo_error)  # temporal: bórralo cuando funcione
     st.stop()
 
 def guardar_nuevo(ig, fotos_urls):
